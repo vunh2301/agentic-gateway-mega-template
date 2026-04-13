@@ -1,0 +1,16 @@
+id: V5-R042
+title: E2E — block-level exception via // e2e-mock-ok-start ... -end
+status: active
+category: enforcement
+severity: low
+description: |
+  Mock patterns inside a block delimited by `// e2e-mock-ok-start` and
+  `// e2e-mock-ok-end` comments are skipped. Use when multiple legitimate
+  mocks are colocated (e.g., mocking entire timer module).
+rationale: |
+  Per-line annotation becomes noisy for multi-line mock setups. Block-level
+  reduces clutter while preserving explicit opt-in.
+enforcement:
+  type: hook
+  hook: check-e2e-real
+added: 2026-04-13

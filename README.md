@@ -18,19 +18,22 @@ and 8+ phases need real gates, not suggestions.
 This plugin provides the missing enforcement layer, compatible with
 Superpowers + oh-my-claudecode skill ecosystems.
 
-## Plugin stack this assumes
+## Plugin stack this assumes (v0.3.0)
 
 | Tool | Role | Install |
 |---|---|---|
-| Superpowers | Workflow discipline (brainstorm → TDD → verify) | `/plugin install superpowers@claude-plugins-official` |
-| oh-my-claudecode (OMC) | Multi-agent orchestration (team, ralph, wiki) | `/plugin install oh-my-claudecode@omc` |
-| **mega-template** | Spec enforcement + phase gating | See below |
-| GitNexus | Code intelligence + impact analysis | `npm i -g gitnexus` (Windows: global only) |
+| oh-my-claudecode (OMC) | Full pipeline: spec→plan→execute→verify, model routing, parallel execution | `/plugin install oh-my-claudecode@omc` |
+| **mega-template** | Spec enforcement + phase gating + TDD gate + E2E integrity + verification evidence | See below |
 | Context7 | Live SDK docs | `claude mcp add context7 --url https://mcp.context7.com/mcp` (Windows: remote only) |
+| psmux *(Windows)* | tmux compatibility for OMC team/parallel | `cargo install psmux` |
 
-**NOT included:** Claude-Mem (rejected — HTTP :37777 no-auth + ChromaDB
-subprocess leaks). Replaced by OMC `/wiki` skill + CLAUDE.md + SP plan
-checkboxes.
+**Removed in v0.3.0:**
+- **Superpowers** — workflow conflict with OMC pipeline. Quality gates
+  absorbed into mega-template hooks (stronger than skill-level prompts).
+- **GitNexus** — removed from mega-template integration. Use independently
+  if desired; not coupled with phase-gate.
+- **Claude-Mem** — security CVE (HTTP :37777 no-auth) + ChromaDB leak.
+  Memory = OMC `/wiki` + PROGRESS.md + spec-index.yaml.
 
 ## Install (for consumer repos)
 
@@ -124,16 +127,21 @@ Enforcement hooks activate immediately. `consumer-feature` skill auto-fires.
     └── plans/                          # SP plan output (gitignored)
 ```
 
-## Hooks provided
+## Hooks provided (v0.3.0)
 
-| Hook | Event | What it blocks |
-|------|-------|----------------|
-| `check-spec.mjs` | PreToolUse Write/Edit | File in `packages/*/src/` without matching spec in `docs/` |
-| `check-phase-gate.mjs` | PreToolUse Write/Edit | File outside current phase scope per `spec-index.yaml` |
-| `check-spec-coverage.mjs` | PreToolUse Write | New src file without `@spec(...)` annotation |
-| `require-tests.mjs` | PostToolUse Bash (git commit) | Commit without matching test for new src file |
-| `load-context.mjs` | UserPromptSubmit | (non-blocking) injects CLAUDE.md digest + active phase |
-| `orphan-sweep.mjs` | SessionEnd | (non-blocking) reports sections without code coverage |
+| Hook | Event | What it blocks | Rules |
+|------|-------|----------------|-------|
+| `check-spec.mjs` | PreToolUse Write/Edit | File in `src/` (flat) or `packages/*/src/` without matching spec | V5-R004 |
+| `check-phase-gate.mjs` | PreToolUse Write/Edit | File outside active phase scope per `spec-index.yaml` | V5-R016 |
+| `check-spec-coverage.mjs` | PreToolUse Write | New src file without `@spec(phase=N,section=X)` annotation | V5-R017 |
+| **`enforce-tdd.mjs`** ✨ | PreToolUse Write/Edit | Src file write without corresponding test on disk (git history check) | V5-R030..R034 |
+| `require-tests.mjs` | PostToolUse Bash (git commit) | (warn) Commit without matching test for new src file | V5-R006 |
+| **`check-e2e-real.mjs`** ✨ | PostToolUse Bash (git commit) | E2E test files containing mock patterns (with annotation exceptions) | V5-R040..R043 |
+| **`enforce-verification.mjs`** ✨ | PostToolUse Bash (git commit) | Src commits without test evidence (session/strict/relaxed modes) | V5-R050, V5-R053, V5-R054 |
+| `load-context.mjs` | UserPromptSubmit | (non-blocking) inject CLAUDE.md digest + active phase + entry-flow detection | — |
+| `orphan-sweep.mjs` | SessionEnd | (non-blocking) reports sections without code coverage | V5-R018 |
+
+✨ = new in v0.3.0
 
 ## Skills provided
 

@@ -1,0 +1,16 @@
+id: V5-R034
+title: TDD — test convention mapping is configurable
+status: active
+category: enforcement
+severity: low
+description: |
+  spec-index.yaml `tdd.test_conventions:` defines regex pattern → test path
+  mapping. Multiple conventions tried in order; first match wins. Defaults
+  cover common layouts (tests/, test/, alongside).
+rationale: |
+  Different projects use different test layouts. Hardcoding violates
+  reusability. Convention list supports flat + monorepo + per-project rules.
+enforcement:
+  type: hook
+  hook: enforce-tdd
+added: 2026-04-13

@@ -1,0 +1,16 @@
+id: V5-R053
+title: Verification — exclude commits by message prefix
+status: active
+category: enforcement
+severity: low
+description: |
+  Commits with message starting with configured prefixes skip verification:
+    docs: chore: infra: ci: build:
+  Configurable in spec-index.yaml `verification.exclude_prefixes:`.
+rationale: |
+  Documentation, infrastructure, and CI commits don't change runtime
+  behavior. Forcing test evidence creates noise without value.
+enforcement:
+  type: hook
+  hook: enforce-verification
+added: 2026-04-13

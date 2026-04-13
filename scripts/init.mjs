@@ -138,6 +138,21 @@ async function main() {
     ? ["src/**", "tests/**"]
     : [`packages/${activePackage}/src/**`, `packages/${activePackage}/tests/**`];
 
+  // TDD config based on layout
+  const tddSrcPatterns = layout === "flat"
+    ? ["src/**"]
+    : [`packages/${activePackage}/src/**`];
+  const tddConventions = layout === "flat"
+    ? [
+        { pattern: "^src/(.*)\\.ts$", test: "tests/$1.test.ts" },
+        { pattern: "^src/(.*)\\.ts$", test: "test/$1.test.ts" },
+        { pattern: "^src/(.*)\\.ts$", test: "src/$1.test.ts" },
+      ]
+    : [
+        { pattern: `^packages/${activePackage}/src/(.*)\\.ts$`, test: `packages/${activePackage}/tests/$1.test.ts` },
+        { pattern: `^packages/${activePackage}/src/(.*)\\.ts$`, test: `packages/${activePackage}/test/$1.test.ts` },
+      ];
+
   const ctx = {
     PROJECT_NAME: projectName,
     ACTIVE_PACKAGE: activePackage,
@@ -146,6 +161,10 @@ async function main() {
     SPEC_PATH: specPath,
     LAYOUT: layout,
     ACTIVE_PATHS: activePaths.map((p) => `      - ${p}`).join("\n"),
+    TDD_SRC_PATTERNS: tddSrcPatterns.map((p) => `"${p}"`).join(", "),
+    TDD_CONVENTIONS: tddConventions
+      .map((c) => `    - pattern: "${c.pattern.replace(/\\/g, "\\\\")}"\n      test: "${c.test}"`)
+      .join("\n"),
     DATE: new Date().toISOString().slice(0, 10),
     PACKAGES_CSV: activePackage,
     PACKAGES_TABLE:
@@ -228,14 +247,22 @@ function generateSettings(hookPrefix) {
             { type: "command", command: `node ${h}/check-spec.mjs`, timeout: 5000 },
             { type: "command", command: `node ${h}/check-phase-gate.mjs`, timeout: 5000 },
             { type: "command", command: `node ${h}/check-spec-coverage.mjs`, timeout: 5000 },
+            { type: "command", command: `node ${h}/enforce-tdd.mjs`, timeout: 5000 },
           ],
         },
       ],
       PostToolUse: [
         {
           matcher: "Bash",
-          hooks: [{ type: "command", command: `node ${h}/require-tests.mjs`, timeout: 60000 }],
+          hooks: [
+            { type: "command", command: `node ${h}/require-tests.mjs`, timeout: 60000 },
+            { type: "command", command: `node ${h}/check-e2e-real.mjs`, timeout: 5000 },
+            { type: "command", command: `node ${h}/enforce-verification.mjs`, timeout: 5000 },
+          ],
         },
+      ],
+      SessionEnd: [
+        { hooks: [{ type: "command", command: `node ${h}/orphan-sweep.mjs`, timeout: 10000 }] },
       ],
     },
   };

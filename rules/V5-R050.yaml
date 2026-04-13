@@ -1,0 +1,19 @@
+id: V5-R050
+title: Verification — commits with src changes require test evidence
+status: active
+category: enforcement
+severity: high
+description: |
+  Commits touching files matching tdd.src_patterns require either:
+    (a) Staged evidence artifact (test-results/, coverage/, e2e/results/)
+    (b) Recent test artifact (mtime < 30 min) in a known evidence dir
+        — only in 'session' strictness mode
+  Default strictness: session.
+rationale: |
+  Past v5 incident: agent claimed tests passed without running them. Forcing
+  evidence (artifact OR recent run) provides auditable proof. Session mode
+  reduces friction vs strict (which forces artifact every commit).
+enforcement:
+  type: hook
+  hook: enforce-verification
+added: 2026-04-13

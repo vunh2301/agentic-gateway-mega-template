@@ -1,0 +1,18 @@
+id: V5-R040
+title: E2E — no mock patterns in E2E test files
+status: active
+category: enforcement
+severity: critical
+description: |
+  E2E test files (matching configured patterns, default **/e2e/**/*.test.*)
+  must not contain mock function patterns: jest.mock, vi.mock, sinon.stub,
+  nock, .mockImplementation, .mockResolvedValue, fetch=jest.fn, etc.
+  Block at commit time.
+rationale: |
+  Past v5 incident: E2E tests reported as PASS were actually mocks. Hook
+  catches obvious failure mode at commit time. Not 100% — full validation
+  requires real Gateway + infrastructure.
+enforcement:
+  type: hook
+  hook: check-e2e-real
+added: 2026-04-13

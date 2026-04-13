@@ -1,0 +1,17 @@
+id: V5-R043
+title: E2E — file-level exception via // e2e-real-verified header
+status: active
+category: enforcement
+severity: low
+description: |
+  E2E test files with `// e2e-real-verified` comment in first 10 lines are
+  fully exempt from mock pattern checks. Must include human justification
+  comment explaining why mocks are necessary in this file.
+rationale: |
+  For test files that are conceptually E2E but use extensive doubles for
+  legitimate reasons (e.g., contract tests against frozen API spec).
+  File-level exemption requires explicit human review.
+enforcement:
+  type: hook
+  hook: check-e2e-real
+added: 2026-04-13

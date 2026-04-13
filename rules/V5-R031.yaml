@@ -1,0 +1,17 @@
+id: V5-R031
+title: TDD — test file must be committed before or with src
+status: active
+category: enforcement
+severity: high
+description: |
+  Git history check: the test file must appear in the same commit as src OR
+  in an earlier commit. Source committed alone (no test) → block on next
+  src write attempt.
+rationale: |
+  mtime-based check (proposed in spec draft) fails on Windows (1s resolution)
+  and after git checkout (resets mtime to current). Git history is
+  deterministic and cross-platform.
+enforcement:
+  type: hook
+  hook: enforce-tdd
+added: 2026-04-13

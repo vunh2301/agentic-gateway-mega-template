@@ -1,0 +1,15 @@
+id: V5-R032
+title: TDD — warn when test added in commit AFTER source
+status: active
+category: enforcement
+severity: medium
+description: |
+  Non-blocking warning: if first src commit precedes first test commit,
+  TDD discipline is questionable. Flagged at session end + on next write.
+rationale: |
+  Catches "I'll write tests later" pattern. Not blocking because retroactive
+  test-adding is sometimes acceptable (e.g., porting legacy code).
+enforcement:
+  type: hook
+  hook: enforce-tdd
+added: 2026-04-13

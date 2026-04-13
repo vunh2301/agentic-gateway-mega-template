@@ -34,3 +34,40 @@ phases:
   #   paths:
   #     - src/phase2/**        # flat layout example
   #     # OR packages/{{ACTIVE_PACKAGE}}/src/phase2/**  (monorepo)
+
+# === Quality Gates (v0.3.0) ===
+
+tdd:
+  enabled: true
+  src_patterns: [{{TDD_SRC_PATTERNS}}]
+  test_conventions:
+{{TDD_CONVENTIONS}}
+  exclude:
+    - "**/*.d.ts"
+    - "**/index.ts"
+    - "**/types.ts"
+    - "**/__generated__/**"
+
+e2e:
+  enabled: true
+  test_patterns:
+    - "**/*.e2e.test.*"
+    - "**/e2e/**/*.test.*"
+    - "**/e2e/**/*.spec.*"
+  extra_blocked_patterns: []
+
+verification:
+  enabled: true
+  strictness: session    # strict | session | relaxed
+  evidence_patterns:
+    - "test-results/**/*.json"
+    - "test-results/**/*.xml"
+    - "coverage/**"
+    - "e2e/results/**"
+    - ".verification/**"
+  exclude_prefixes:
+    - "docs:"
+    - "chore:"
+    - "infra:"
+    - "ci:"
+    - "build:"

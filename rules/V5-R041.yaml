@@ -1,0 +1,16 @@
+id: V5-R041
+title: E2E — line-level exception via // e2e-mock-ok comment
+status: active
+category: enforcement
+severity: low
+description: |
+  Mock pattern on a line containing comment `// e2e-mock-ok` skipped by
+  check-e2e-real hook. Use sparingly for legitimate test doubles (clock,
+  random, single deterministic value).
+rationale: |
+  Some test doubles ARE legitimate in E2E (e.g., mock the system clock to
+  test timeout behavior). Annotation is explicit opt-in, not default.
+enforcement:
+  type: hook
+  hook: check-e2e-real
+added: 2026-04-13

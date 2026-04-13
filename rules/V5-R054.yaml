@@ -1,0 +1,18 @@
+id: V5-R054
+title: Verification — session-mode accepts recent test runs
+status: active
+category: enforcement
+severity: medium
+description: |
+  In strictness 'session' (default), accept evidence file modified within
+  last 30 minutes in known evidence directories (test-results/, coverage/,
+  e2e/results/, .verification/). Avoids friction of staging test output for
+  every small fix while still requiring tests to actually run.
+rationale: |
+  Strict mode (always require staged artifact) bloat git history with JSON
+  reports. Session mode catches "didn't run tests" without requiring commit
+  pollution. Strict reserved for CI/release commits.
+enforcement:
+  type: hook
+  hook: enforce-verification
+added: 2026-04-13

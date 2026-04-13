@@ -19,6 +19,7 @@ Single source of truth for plugin development.
 | 6 | ✅ done | Self-dogfood + GitHub push |
 | 7 | ✅ done | Code review fixes (8 bugs) |
 | 8 | ✅ done | v0.2.0 flat layout support — `layout: flat\|monorepo` config field, 3 hooks branch, init --layout flag |
+| 9 | ✅ done | v0.3.0 — drop Superpowers + drop GitNexus integration + 3 new hooks (TDD/E2E/verification) + 12 new rules |
 
 ## Verification evidence
 

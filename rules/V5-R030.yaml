@@ -1,0 +1,17 @@
+id: V5-R030
+title: TDD — every src file requires a test file
+status: active
+category: enforcement
+severity: critical
+description: |
+  Writing any file under packages/*/src/** or src/** requires a corresponding
+  test file to exist on disk. Test path derived via configured conventions.
+  Block on missing test (write the failing test first).
+rationale: |
+  Without TDD enforcement, code accumulates without verification. Hook-level
+  block is stronger than skill-level reminder because it cannot be bypassed
+  by the model.
+enforcement:
+  type: hook
+  hook: enforce-tdd
+added: 2026-04-13
