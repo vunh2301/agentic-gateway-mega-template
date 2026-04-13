@@ -13,5 +13,5 @@ rationale: |
   prevented hours of wasted debug.
 enforcement:
   type: doc
-  skill: superpowers:systematic-debugging gate 1
+  skill: /oh-my-claudecode:debug gate 1 (replaces SP in v0.3.0)
 added: 2026-04-13

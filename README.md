@@ -15,8 +15,8 @@ Existing Claude Code workflows rely on prose-level CLAUDE.md rules. Research
 showed this yields ~70% agent compliance. Large projects with 100KB+ specs
 and 8+ phases need real gates, not suggestions.
 
-This plugin provides the missing enforcement layer, compatible with
-Superpowers + oh-my-claudecode skill ecosystems.
+This plugin provides the missing enforcement layer, composing with the
+oh-my-claudecode skill ecosystem (deep-interview, ralplan, autopilot, ralph).
 
 ## Plugin stack this assumes (v0.3.0)
 
@@ -161,10 +161,9 @@ Enforcement hooks activate immediately. `consumer-feature` skill auto-fires.
 
 ## Windows notes
 
-- **GitNexus**: MUST install global (`npm i -g gitnexus`). `npx` mode has
-  peer-dependency conflicts.
 - **Context7**: MUST use remote mode (`--url https://mcp.context7.com/mcp`).
   Local `npx` mode causes Marketplace refresh loop.
+- **psmux**: install for OMC team/parallel execution (`cargo install psmux`).
 - Hooks run via Node 20+. Use `cmd /c node` if `node` alias broken.
 - Line endings: hooks handle CRLF normalization. No action required.
 

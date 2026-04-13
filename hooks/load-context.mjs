@@ -81,15 +81,15 @@ function detectRepoState(repoRoot) {
     return { suggestion: "Enforcement installed but no spec-index.yaml. Run /spec-init to declare phases." };
   }
   if (!hasAnySpec && hasPackages) {
-    return { suggestion: "spec-index.yaml exists but docs/specs/ empty. Say 'I want to build <feature>' → superpowers:brainstorming fires." };
+    return { suggestion: "spec-index.yaml exists but docs/specs/ empty. Run /oh-my-claudecode:deep-interview <feature>." };
   }
   if (hasAnySpec && !hasAnyPlan) {
-    return { suggestion: "Spec drafted but no plan. Say 'Write the plan' → superpowers:writing-plans fires." };
+    return { suggestion: "Spec drafted but no plan. Run /oh-my-claudecode:ralplan." };
   }
   if (hasAnyPlan) {
     const openTasks = countOpenTasks(plansDir);
     if (openTasks > 0) {
-      return { suggestion: `Plan has ${openTasks} open task(s). Resume with superpowers:executing-plans or /oh-my-claudecode:ralph.` };
+      return { suggestion: `Plan has ${openTasks} open task(s). Resume with /oh-my-claudecode:autopilot or /oh-my-claudecode:ralph.` };
     }
     return { suggestion: "All plan tasks done. Run /phase-promote to advance." };
   }

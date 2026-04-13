@@ -75,7 +75,7 @@ async function main() {
       `[mega:check-spec] BLOCKED: no spec for package "${pkgName}" (V5-R004).\n` +
       `  Looked in: ${docsDir}\n` +
       `  Expected: docs/${pkgName}*.md OR docs/plans/${pkgName}*.md OR docs/specs/${pkgName}*.md\n` +
-      `  Fix: invoke superpowers:brainstorming to generate spec first.\n` +
+      `  Fix: invoke /oh-my-claudecode:deep-interview to generate spec first.\n` +
       `  Bypass: CLAUDE_SKIP_HOOKS=1 (document in commit message).`
     );
     process.exit(2);

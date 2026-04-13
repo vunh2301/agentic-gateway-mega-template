@@ -20,24 +20,30 @@ shows this yields ~70% agent compliance. Large projects (100KB+ specs,
 
 ## Layers
 
-### L1 — Workflow discipline (Superpowers)
-Brainstorming, planning, TDD, debugging, verification skills. Provided by
-external `superpowers` plugin.
+### L1 — Workflow + multi-agent orchestration (oh-my-claudecode)
+Full pipeline: deep-interview → ralplan → autopilot / team / ralph.
+Model routing, parallel workers, persistent `/wiki`, debug skill.
+Provided by external `oh-my-claudecode` plugin.
 
-### L2 — Multi-agent orchestration (oh-my-claudecode)
-Parallel workers, team delegation, persistent wiki. Provided by external
-`oh-my-claudecode` plugin.
+### L2 — Spec enforcement + quality gates (this plugin, v0.3.0)
+Hook-level gates (harness-enforced, cannot be bypassed by model):
+- spec existence, phase scope, traceability, test coverage, orphan detection
+- TDD (test before src, git history check)
+- E2E integrity (no mock patterns in E2E tests)
+- verification evidence (test artifacts required for src commits)
 
-### L3 — Spec enforcement (this plugin)
-Hook-level gates: spec existence, phase scope, traceability, test coverage,
-orphan detection. Skill: consumer-feature 6-gate workflow.
+Skill: `consumer-feature` 5-gate workflow bridging OMC + hooks.
 
-### L4 — Intelligence (GitNexus + Context7)
-Code graph + impact analysis via GitNexus (local CLI). Live SDK docs via
-Context7 (remote MCP on Windows).
+### L3 — Docs (Context7)
+Live SDK docs via Context7 (remote MCP on Windows).
 
 ### Rejected layers
 
+- **Superpowers** (removed v0.3.0) — workflow conflict with OMC pipeline.
+  Quality gates (TDD, verification, code-review) absorbed into mega-template
+  hooks. Hook-level is stronger than skill-level prompts.
+- **GitNexus integration** (removed v0.3.0) — decoupled from phase-gate.
+  Use GitNexus independently if desired; not coupled with mega-template.
 - **Claude-Mem** — security CVE (HTTP :37777 no-auth) + stability
   (ChromaDB subprocess leak). Replaced by OMC `/wiki`.
 
@@ -109,5 +115,5 @@ Consumer repos install via `/plugin install` or `npx mega-template-init`.
   expensive). We use grep-based matrix instead.
 - Full requirements management (use Doorstop or sphinx-needs for
   safety-critical work).
-- Replacing Superpowers or OMC (we compose with them, not replace).
+- Replacing OMC (we compose with it; OMC owns the pipeline).
 - Cross-session AI memory (rejected — security). Use OMC /wiki.

@@ -2,16 +2,6 @@
 
 Known issues and workarounds for Windows 11 development with this plugin.
 
-## GitNexus — install global, not npx
-
-**Problem:** `npx gitnexus` has peer-dependency conflicts on Windows.
-**Fix:** Install global once.
-
-```powershell
-npm install -g gitnexus
-gitnexus --version  # verify
-```
-
 ## Context7 — remote MCP, not local
 
 **Problem:** Local npx Context7 triggers Claude Code Marketplace refresh
@@ -39,6 +29,17 @@ If you need rate-limit bypass, add API key:
   "headers": { "CONTEXT7_API_KEY": "your-key" }
 }
 ```
+
+## psmux — Windows tmux for OMC parallel
+
+OMC `team` / `ultrawork` skills use tmux for parallel worker coordination.
+Windows needs `psmux`:
+
+```powershell
+cargo install psmux
+```
+
+Without it, OMC parallel execution falls back to sequential.
 
 ## Node path issues
 
@@ -75,8 +76,3 @@ HTTP :37777 port has no authentication. Any local process can read
 observations, API keys, inject memories. ChromaDB integration has
 subprocess leak (184 orphan procs in 19h reported). Use OMC `/wiki`
 instead for cross-session memory.
-
-## GitNexus + security
-
-GitNexus CLI runs local Tree-sitter parse — does NOT call LLM or external
-services. Safe on private repos. MCP server mode also local-only.

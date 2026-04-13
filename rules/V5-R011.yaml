@@ -12,6 +12,6 @@ rationale: |
   hides the real bug from the next session.
 enforcement:
   type: skill
-  skill: superpowers:systematic-debugging
-  fallback: consumer-feature gate 6 (after 3 fix attempts)
+  skill: /oh-my-claudecode:debug (replaces SP in v0.3.0)
+  fallback: consumer-feature gate 5 (after 3 fix attempts)
 added: 2026-04-13

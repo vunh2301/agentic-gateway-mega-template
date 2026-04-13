@@ -12,5 +12,5 @@ rationale: |
   fixing. More attempts at the same layer just add complexity.
 enforcement:
   type: skill
-  skill: superpowers:systematic-debugging
+  skill: /oh-my-claudecode:debug (replaces SP in v0.3.0)
 added: 2026-04-13
