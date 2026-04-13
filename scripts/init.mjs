@@ -249,7 +249,12 @@ function generateSettings(hookPrefix) {
     permissions: { allow: ["Bash(*)", "Read(*)", "Write(*)", "Edit(*)", "Glob(*)", "Grep(*)", "Skill(*)", "Agent(*)"] },
     hooks: {
       UserPromptSubmit: [
-        { hooks: [{ type: "command", command: `node ${h}/load-context.mjs`, timeout: 5000 }] },
+        {
+          hooks: [
+            { type: "command", command: `node ${h}/load-context.mjs`, timeout: 5000 },
+            { type: "command", command: `node ${h}/inject-decision-rules.mjs`, timeout: 5000 },
+          ],
+        },
       ],
       PreToolUse: [
         {

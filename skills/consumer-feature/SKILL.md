@@ -12,6 +12,18 @@ description: |
 This skill is the primary workflow for any feature work. Chains OMC pipeline
 skills with mega-template enforcement hooks. Every gate passes or blocks.
 
+## Decision Mode (v0.5.0)
+
+`inject-decision-rules` hook (UserPromptSubmit) gives the agent a guidance
+block listing rules to auto-apply and technical defaults to auto-pick.
+Skills that would pause for a ceremonial question (e.g. "fix root cause vs
+band-aid" — answer dictated by V5-R011) MUST decide silently and log the
+rule-id. Only pause for `user_choice` topics (scope prioritization, oversight
+level, external API design). See V5-R057 and V5-R058.
+
+Disable with `decisions.enabled: false` in `spec-index.yaml` for fully
+interactive mode.
+
 ## Gate 1 — Memory & Spec Review (V5-R001, V5-R002)
 
 Before ANY code:

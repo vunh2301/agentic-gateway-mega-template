@@ -1,0 +1,28 @@
+id: V5-R057
+title: Decisions — auto-apply rule-based choices, skip ceremonial questions
+status: active
+category: enforcement
+severity: medium
+description: |
+  When a skill (deep-interview, ralplan, autopilot) pauses to ask a question
+  whose answer is already determined by a rule in the active registry, the
+  agent MUST apply the rule and skip the prompt. Categories:
+    (a) auto_apply — rules cover the decision (e.g., V5-R011 root-cause fix
+        vs band-aid) → decide silently, log rule-id
+    (b) constraint_defaults — technical defaults are obvious best-practice
+        (hot-path purity, session-ended triggers, model reuse) → auto-pick
+        the whole set, show a one-line summary not a multi-select menu
+    (c) user_choice — legitimate user preferences (scope prioritization,
+        oversight level) → still ask
+  Contrarian/drift-check rounds after a decision is already made count as
+  ceremonial and should be skipped unless the user asks for them.
+rationale: |
+  Prior phases of this project accumulated 5-7 ceremonial questions per
+  phase (contrarian drifts, obvious constraint defaults, fix-vs-workaround
+  when V5-R011 already mandates fix). Reading a rule is faster than asking
+  a user. The rule registry exists precisely so decisions don't need to be
+  re-negotiated every phase.
+enforcement:
+  type: hook
+  hook: inject-decision-rules
+added: 2026-04-14

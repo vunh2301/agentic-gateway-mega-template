@@ -81,3 +81,24 @@ review:
   required: [reviewer, verifier, critic]
   artifact_dir: .omc/reviews
   accept_verdicts: [approved, approved-with-notes]
+
+# === Decision Mode (v0.5.0) ===
+# Rules V5-R057, V5-R058. Agent auto-applies rule-based decisions and
+# skips ceremonial questions. Disable by `enabled: false` for fully
+# interactive mode.
+decisions:
+  enabled: true
+  auto_apply:
+    - V5-R011   # fix root cause over band-aid
+    - V5-R030   # TDD-first ordering
+    - V5-R053   # commit-prefix exclusions for docs/chore/etc
+    - V5-R054   # session-mode verification
+  constraint_defaults:
+    - hot_path_purity
+    - session_ended_trigger
+    - model_reuse
+    - bounded_backoff
+  user_choice:
+    - scope_prioritization
+    - oversight_level
+    - external_api_design

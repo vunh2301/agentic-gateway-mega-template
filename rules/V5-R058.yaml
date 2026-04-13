@@ -1,0 +1,22 @@
+id: V5-R058
+title: Decisions — every auto-decision must be traceable by rule-id
+status: active
+category: enforcement
+severity: medium
+description: |
+  When the agent applies V5-R057 to skip a question, the decision MUST be
+  logged with the triggering rule-id. Acceptable places:
+    - commit body: `auto-decided: V5-R011 (fix root cause over band-aid)`
+    - response text: `Applied V5-R030 (TDD-first) — writing test before src`
+    - PROGRESS.md entry: `Decision: auto-apply V5-R053 for docs: prefix exempt`
+  Purpose: maintain a searchable audit trail so a human reviewer can
+  reconstruct why the agent did not pause for a specific question.
+rationale: |
+  Silent auto-decisions are invisible and cannot be audited. Without a
+  rule-id trace, a future reviewer cannot distinguish "agent applied rule
+  correctly" from "agent invented a shortcut". Pairing V5-R057 with
+  audit logging keeps the speed benefit without losing accountability.
+enforcement:
+  type: doc
+  hook: inject-decision-rules  # reminds agent via injected guidance
+added: 2026-04-14

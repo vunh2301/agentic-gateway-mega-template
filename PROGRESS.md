@@ -22,6 +22,8 @@ Single source of truth for plugin development.
 | 9 | ✅ done | v0.3.0 — drop Superpowers + drop GitNexus integration + 3 new hooks (TDD/E2E/verification) + 12 new rules |
 | 10 | ✅ done | v0.3.1 — deadcode cleanup (remove active SP/GitNexus invocations from SKILL.md, hooks, rules, docs) |
 | 11 | ✅ done | v0.4.0 — Gate 4.5 Independent Review (check-review-evidence hook, /phase-review command, V5-R055/R056) |
+| 12 | ✅ done | v0.4.1 — auto git init + PowerShell-safe README |
+| 13 | ✅ done | v0.5.0 — Decision Mode (inject-decision-rules hook, V5-R057/R058) — skip ceremonial questions |
 
 ## Verification evidence
 
