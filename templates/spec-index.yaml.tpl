@@ -71,3 +71,13 @@ verification:
     - "infra:"
     - "ci:"
     - "build:"
+
+# === Independent Review Gate (v0.4.0) ===
+# Rules V5-R055, V5-R056. Blocks `phase-promote:` commits and
+# `phase-*-verified` tags unless each required reviewer has produced
+# an artifact with an accepted verdict.
+review:
+  enabled: true
+  required: [reviewer, verifier, critic]
+  artifact_dir: .omc/reviews
+  accept_verdicts: [approved, approved-with-notes]

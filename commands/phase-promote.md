@@ -8,6 +8,9 @@ Promote current phase to verified status:
 1. Read `spec-index.yaml`
 2. Identify `active_phase` and the phase object
 3. Pre-check gates:
+   - **Independent review (V5-R055, V5-R056)**: `.omc/reviews/<phase>-{reviewer,verifier,critic}.md`
+     all exist with accepted verdict (`approved` or `approved-with-notes`).
+     If missing or blocking verdict → STOP and instruct user to run `/phase-review`.
    - Run coverage: all declared sections have @spec annotation (orphan count = 0)
    - Run tests: `npm test --workspaces` passes
    - Run build: `npm run build` passes

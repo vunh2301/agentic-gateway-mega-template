@@ -1,0 +1,21 @@
+id: V5-R056
+title: Review — phase-promote commits blocked without review artifacts
+status: active
+category: enforcement
+severity: high
+description: |
+  Any commit whose message starts with `phase-promote:` or any tag matching
+  `phase-*-verified` is blocked unless the review artifacts for the active
+  phase exist and carry an accepted verdict. The hook `check-review-evidence`
+  reads `spec-index.yaml` to determine active_phase, required reviewers,
+  artifact_dir, and accept_verdicts, then validates each artifact.
+rationale: |
+  Commit-message convention alone (rule V5-R004) cannot guarantee that a
+  review actually occurred. A hook-level gate at commit/tag time makes the
+  review pass unbypassable at the harness layer (model cannot skip).
+  Bypass requires explicit CLAUDE_SKIP_HOOKS=1 with documented reason —
+  auditable via git history.
+enforcement:
+  type: hook
+  hook: check-review-evidence
+added: 2026-04-13

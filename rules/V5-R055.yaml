@@ -1,0 +1,25 @@
+id: V5-R055
+title: Review — independent review pass required before phase-promote
+status: active
+category: enforcement
+severity: high
+description: |
+  Before a phase can be promoted to verified, it must pass an independent
+  review consisting of three agent lanes:
+    (a) code-reviewer — severity-rated code findings
+    (b) verifier — evidence cross-check for every acceptance criterion
+    (c) critic — plan↔implementation coherence challenge
+  Each lane writes an artifact to `.omc/reviews/<phase>-<reviewer>.md` with
+  frontmatter `verdict: approved | approved-with-notes | changes-requested
+  | rejected`. Promote is blocked unless all lanes return an accepted verdict.
+rationale: |
+  Global rule: "never self-approve in the same active context; use
+  code-reviewer or verifier for the approval pass." Prior to v0.4.0 the
+  mega-template had a `verify` skill (light evidence check) but no mandatory
+  independent review pass. This gap let authoring agents bless their own
+  work, which contradicts the honest-testing principle.
+enforcement:
+  type: hook
+  hook: check-review-evidence
+  command: /phase-review
+added: 2026-04-13

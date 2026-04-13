@@ -250,6 +250,12 @@ function generateSettings(hookPrefix) {
             { type: "command", command: `node ${h}/enforce-tdd.mjs`, timeout: 5000 },
           ],
         },
+        {
+          matcher: "Bash",
+          hooks: [
+            { type: "command", command: `node ${h}/check-review-evidence.mjs`, timeout: 5000 },
+          ],
+        },
       ],
       PostToolUse: [
         {

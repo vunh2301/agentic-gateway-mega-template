@@ -80,6 +80,29 @@ Hooks active at commit:
 - `check-e2e-real` — no mock patterns in E2E tests (V5-R040)
 - `enforce-verification` — test evidence staged or recent session run (V5-R050)
 
+## Gate 4.5 — Independent Review (V5-R055, V5-R056)
+
+Before `/phase-promote` on ANY phase:
+
+1. Invoke `/phase-review` — spawns 3 agents in parallel with fresh context:
+   - `code-reviewer` → severity-rated code findings
+   - `verifier` → evidence cross-check for every acceptance criterion
+   - `critic` → plan↔implementation coherence challenge
+2. Each agent writes `.omc/reviews/<phase>-<reviewer>.md` with frontmatter
+   `verdict: approved | approved-with-notes | changes-requested | rejected`
+3. Gate-pass verdicts: `approved`, `approved-with-notes` (configurable in
+   `spec-index.yaml review.accept_verdicts`)
+4. Blocking verdicts: `changes-requested`, `rejected` → address findings and
+   re-run `/phase-review` (or bypass via `CLAUDE_SKIP_HOOKS=1` with documented
+   reason, audited via git log)
+
+Hooks active at commit:
+- `check-review-evidence` — blocks `phase-promote:` commits + `phase-*-verified`
+  tags unless all three artifacts present with accepted verdicts (V5-R055, V5-R056)
+
+**BLOCK** promote until Gate 4.5 passes. No self-approval — agents must be
+spawned as subagents, never inherited context.
+
 ## Gate 5 — Stuck Handling (V5-R008, V5-R011, V5-R013)
 
 If a task fails more than once:
@@ -101,6 +124,7 @@ If a task fails more than once:
 | 2 | V5-R002 | `/oh-my-claudecode:ralplan` |
 | 3 | V5-R004, V5-R006, V5-R016, V5-R017, V5-R030 | `check-spec` + `check-phase-gate` + `check-spec-coverage` + `enforce-tdd` + `require-tests` |
 | 4 | V5-R005, V5-R007, V5-R040, V5-R050 | `/oh-my-claudecode:verify` + `check-e2e-real` + `enforce-verification` |
+| 4.5 | V5-R055, V5-R056 | `/phase-review` + `check-review-evidence` |
 | 5 | V5-R008, V5-R011, V5-R013 | `/oh-my-claudecode:debug` |
 
 ## Bypass
