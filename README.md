@@ -34,22 +34,77 @@ checkboxes.
 
 ## Install (for consumer repos)
 
-### Option 1 — Claude Code plugin marketplace
+### Quick start — npm (recommended)
 
-```
-/plugin marketplace add vunh2301/agentic-gateway-mega-template
-/plugin install mega-template@agentic-gateway-mega-template
+```bash
+cd <consumer-repo>
+npm install @agentic-gateway/mega-template
+npx mega-template-init
 ```
 
-### Option 2 — Manual npm install
+Interactive prompts ask 5 questions (project, package, phase, sections, spec path).
+
+### Non-interactive (CI-safe)
+
+```bash
+npm install @agentic-gateway/mega-template
+npx mega-template-init --non-interactive \
+    --project my-consumer \
+    --package memory-consumer \
+    --phase phase-1 \
+    --sections "2,3.1,3.2,4,5,6,7" \
+    --spec docs/memory-consumer-spec.md
+```
+
+### One-shot (no local install)
 
 ```bash
 cd <consumer-repo>
 npx -p @agentic-gateway/mega-template mega-template-init
 ```
 
-This copies the `.claude/` enforcement layer into your repo and generates
-`CLAUDE.md`, `AGENTS.md`, `PROGRESS.md`, and `spec-index.yaml`.
+### Claude Code plugin marketplace (alternative)
+
+```
+/plugin marketplace add vunh2301/agentic-gateway-mega-template
+/plugin install mega-template@agentic-gateway-mega-template
+```
+
+### What `init` generates
+
+- `CLAUDE.md` + `AGENTS.md` — rules with stable IDs
+- `PROGRESS.md` — SSOT phase tracking
+- `spec-index.yaml` — phase → sections → files map
+- `.claude/settings.json` — hooks wired to plugin path (auto-detected npm/marketplace/dev)
+- `.gitignore` additions — `docs/specs/`, `docs/plans/`, `.omc/`, etc.
+
+Idempotent: re-running `init` does NOT overwrite existing files. Delete to regenerate.
+
+### Upgrade
+
+```bash
+npm update @agentic-gateway/mega-template
+```
+
+Or pin a specific version:
+
+```bash
+npm install @agentic-gateway/mega-template@0.1.2
+```
+
+### After install — start work
+
+```bash
+git add . && git commit -m "infra: adopt @agentic-gateway/mega-template"
+```
+
+Then in Claude Code (`cwd = <consumer-repo>`):
+
+```
+Start <package> phase-1
+```
+
+Enforcement hooks activate immediately. `consumer-feature` skill auto-fires.
 
 ## What you get
 
