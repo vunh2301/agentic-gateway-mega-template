@@ -1,0 +1,16 @@
+id: V5-R013
+title: After 3 failed fixes, question the architecture
+status: active
+category: no-workaround
+severity: high
+description: |
+  If three fix attempts on the same issue fail, STOP. Do not try a
+  fourth fix. Question the architectural assumption: is the interface
+  wrong? Is the abstraction leaky? Consult user before proceeding.
+rationale: |
+  Repeated fix failures mean the problem is upstream of where you are
+  fixing. More attempts at the same layer just add complexity.
+enforcement:
+  type: skill
+  skill: superpowers:systematic-debugging
+added: 2026-04-13

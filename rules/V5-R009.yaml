@@ -1,0 +1,16 @@
+id: V5-R009
+title: Memory is point-in-time, re-verify before acting
+status: active
+category: empirical
+severity: high
+description: |
+  Memory files (MEMORY.md, wiki pages, notepad) are snapshots from when
+  they were written. Before acting on a memory-derived claim ("X is
+  broken per session Y"), re-verify with an empirical command.
+rationale: |
+  Memory decays. Code changes. A claim true last week may be false now.
+  Trusting stale memory = acting on phantom bugs.
+enforcement:
+  type: doc
+  skill: consumer-feature gate 6
+added: 2026-04-13

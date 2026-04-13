@@ -1,0 +1,17 @@
+id: V5-R011
+title: Fix root cause, not symptoms
+status: active
+category: no-workaround
+severity: critical
+description: |
+  When a bug appears in an upstream system (Gateway endpoint, SDK, OS
+  Worker), fix the root cause in that system. Do NOT parse output text,
+  catch exceptions, or write compensating code to hide the symptom.
+rationale: |
+  Symptom fixes compound. Each workaround creates brittle coupling and
+  hides the real bug from the next session.
+enforcement:
+  type: skill
+  skill: superpowers:systematic-debugging
+  fallback: consumer-feature gate 6 (after 3 fix attempts)
+added: 2026-04-13

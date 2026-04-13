@@ -1,0 +1,16 @@
+id: V5-R006
+title: Every src file has matching test file
+status: active
+category: code-testing
+severity: high
+description: |
+  Every new file in packages/*/src/**.ts must have a corresponding test
+  file in packages/*/tests/, __tests__/, or alongside as foo.test.ts.
+  Enforced post-commit by require-tests hook (warning, not block).
+rationale: |
+  Untested code accumulates as debt. Enforcement at commit time prevents
+  "I'll add tests later" drift.
+enforcement:
+  type: hook
+  hook: require-tests
+added: 2026-04-13

@@ -1,0 +1,21 @@
+node_modules/
+dist/
+results/
+*.log
+.env
+.env.local
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.cache/
+coverage/
+
+# Local Claude overrides
+.claude/settings.local.json
+
+# OMC/SP scratch
+.omc/
+.superpowers/
+
+# Package artifacts
+*.tgz

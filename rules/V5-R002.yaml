@@ -1,0 +1,16 @@
+id: V5-R002
+title: Confirm phase + package + status with user before coding
+status: active
+category: phase-task
+severity: high
+description: |
+  After reading memory, explicitly state to the user:
+  "Phase X, package Y [current status]. Will do Z." Get confirmation
+  before proceeding. Prevents wrong-scope work.
+rationale: |
+  Ambiguous requests lead to scope creep or wrong-package work. Explicit
+  confirmation is a 5-second cost that prevents hours of rework.
+enforcement:
+  type: skill
+  skill: consumer-feature
+added: 2026-04-13

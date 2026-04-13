@@ -1,0 +1,17 @@
+id: V5-R005
+title: No mock Gateway in E2E tests
+status: active
+category: code-testing
+severity: critical
+description: |
+  E2E tests must connect to a real running Gateway at localhost:2400.
+  Unit tests may mock internal collaborators. Integration tests may use
+  a test Gateway instance. But E2E = real Gateway, real protocol.
+rationale: |
+  Past v5 incident: mock tests passed but production migration failed.
+  Mock/prod divergence hides real protocol bugs.
+enforcement:
+  type: doc
+  manual_check: true
+  fallback: require-tests hook runs real test suite post-commit
+added: 2026-04-13

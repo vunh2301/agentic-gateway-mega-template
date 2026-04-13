@@ -1,0 +1,17 @@
+id: V5-R001
+title: Read CLAUDE.md + PROGRESS.md + spec before coding
+status: active
+category: phase-task
+severity: critical
+description: |
+  Before writing any code, read CLAUDE.md, PROGRESS.md, and the active
+  package's spec document. No exceptions.
+rationale: |
+  Stateless agent sessions drift without explicit grounding. Skipping
+  memory causes duplicated work, contradicted decisions, and spec
+  deviation (past v5 incidents).
+enforcement:
+  type: hook
+  hook: load-context
+  fallback: skill:consumer-feature gate 1
+added: 2026-04-13

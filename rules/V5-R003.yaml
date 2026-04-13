@@ -1,0 +1,17 @@
+id: V5-R003
+title: Update PROGRESS.md on done/partial/blocked
+status: active
+category: phase-task
+severity: high
+description: |
+  Every task state change (done, partial, blocked) must be reflected in
+  PROGRESS.md in the same session. Un-updated PROGRESS = stateless next
+  session can't resume.
+rationale: |
+  PROGRESS.md is single source of truth. Stale = next agent session
+  starts from wrong assumption.
+enforcement:
+  type: doc
+  manual_check: true
+  lint: check stale mtime > 7 days via load-context hook
+added: 2026-04-13

@@ -1,0 +1,17 @@
+id: V5-R016
+title: Phase scope enforcement — no writes outside active phase
+status: active
+category: enforcement
+severity: critical
+description: |
+  The file being written must fall under one of the path patterns
+  declared for the active phase in spec-index.yaml. Writes to paths
+  owned by future phases are blocked until the gate condition passes.
+rationale: |
+  Without phase scope enforcement, agents drift into future scope,
+  creating code that cannot be verified against current-phase spec.
+  Rust RFC pattern: advance only after gate.
+enforcement:
+  type: hook
+  hook: check-phase-gate
+added: 2026-04-13

@@ -1,0 +1,17 @@
+id: V5-R018
+title: Orphan sections flagged at session end
+status: active
+category: enforcement
+severity: medium
+description: |
+  Sections declared in spec-index.yaml for the active phase but with no
+  @spec() annotation anywhere in the codebase are flagged as orphans.
+  Non-blocking — informational at session end.
+rationale: |
+  Manual coverage review misses items over time. Automated orphan
+  detection (Doorstop pattern) surfaces spec sections silently skipped.
+enforcement:
+  type: hook
+  hook: orphan-sweep
+  trigger: SessionEnd or on-demand via /spec-status
+added: 2026-04-13

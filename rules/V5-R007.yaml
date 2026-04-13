@@ -1,0 +1,18 @@
+id: V5-R007
+title: Classify test level honestly (unit vs integration vs E2E)
+status: active
+category: code-testing
+severity: critical
+description: |
+  Never report mock tests, stub tests, or partial tests as "E2E pass" in
+  PROGRESS.md or commit messages. Classify explicitly:
+  - unit: mocked collaborators, tests 1 unit
+  - integration: real collaborators within process, mocked external services
+  - e2e: real running Gateway + real wire protocol + real external
+rationale: |
+  Past v5 audits found inflated checklist items marked ✅ with mock-only
+  evidence. Honest classification is the only way to track real coverage.
+enforcement:
+  type: doc
+  manual_check: true
+added: 2026-04-13

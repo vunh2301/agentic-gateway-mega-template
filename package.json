@@ -1,0 +1,42 @@
+{
+  "name": "@agentic-gateway/mega-template",
+  "version": "0.1.0",
+  "description": "Spec-enforcement plugin for large multi-phase AI-agent projects",
+  "type": "module",
+  "private": false,
+  "bin": {
+    "mega-template-init": "./scripts/init.mjs",
+    "mega-template-coverage": "./scripts/spec-coverage.mjs",
+    "mega-template-gate": "./scripts/spec-gate-check.mjs"
+  },
+  "files": [
+    ".claude-plugin/",
+    "hooks/",
+    "skills/",
+    "commands/",
+    "templates/",
+    "rules/",
+    "scripts/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "lint": "node scripts/lint-rules.mjs",
+    "test": "node --test tests/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vunh2301/agentic-gateway-mega-template"
+  },
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "spec-enforcement",
+    "phase-gating"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}

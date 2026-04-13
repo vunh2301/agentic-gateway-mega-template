@@ -1,0 +1,18 @@
+id: V5-R004
+title: Zero imports from Gateway source in consumer packages
+status: active
+category: code-testing
+severity: critical
+description: |
+  Consumer packages (harness-test, torture-test, memory-consumer) must
+  talk to Gateway via public API only (:2400 REST + /ws). No `import`
+  from Gateway source tree. Violation = revert commit.
+rationale: |
+  Whole point of consumer-side packages is validating public contract
+  like a third-party integration. Source imports break this abstraction
+  and create brittle coupling.
+enforcement:
+  type: hook
+  hook: check-spec-coverage
+  lint: grep for forbidden imports via eslint rule
+added: 2026-04-13

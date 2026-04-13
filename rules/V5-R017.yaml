@@ -1,0 +1,19 @@
+id: V5-R017
+title: New src files must have @spec() annotation
+status: active
+category: enforcement
+severity: high
+description: |
+  Every new file in packages/*/src/ must include a @spec() comment tying
+  the file to a spec section or rule ID. Format:
+    // @spec(phase=1,section=3.2)
+    /** @spec(phase=1,req=V5-R001) */
+  Edits to existing files are exempt.
+rationale: |
+  Without traceability markers, spec coverage is manual and drifts.
+  Grep-based matrix generation (via spec-coverage script) depends on
+  these annotations.
+enforcement:
+  type: hook
+  hook: check-spec-coverage
+added: 2026-04-13

@@ -1,0 +1,16 @@
+id: V5-R012
+title: Missing feature → add to codebase, not patch script
+status: active
+category: no-workaround
+severity: critical
+description: |
+  If harness/torture/memory-consumer doesn't handle case X, add support
+  INTO that package. Do NOT write shell scripts, one-off Node scripts,
+  or external tools that patch state.
+rationale: |
+  Scripts outside the codebase create shadow infrastructure. Next
+  session doesn't know the script exists, reality diverges.
+enforcement:
+  type: doc
+  manual_check: true
+added: 2026-04-13

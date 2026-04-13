@@ -1,0 +1,16 @@
+id: V5-R010
+title: Sub-agent BLOCKED → verify independently before accepting
+status: active
+category: empirical
+severity: high
+description: |
+  If a sub-agent or tool reports BLOCKED due to environment (network
+  down, auth failed, service missing), verify the claim independently
+  before accepting. Sub-agents can be wrong.
+rationale: |
+  Agents fail with false-positive blockers when their environment is
+  subtly different from main session. Independent check catches this.
+enforcement:
+  type: doc
+  manual_check: true
+added: 2026-04-13

@@ -1,0 +1,18 @@
+id: V5-R014
+title: REDACT secrets before any output or commit
+status: active
+category: security
+severity: critical
+description: |
+  Before showing command output, screenshots, or committing files,
+  REDACT: API keys, auth tokens, passwords, session tokens, bootstrap
+  tokens, private keys. OK to show: localhost, port numbers,
+  machineId, SSH usernames.
+rationale: |
+  Committed secrets live in git history forever. Screenshot secrets
+  leak to any viewer. Revocation is expensive and sometimes impossible.
+enforcement:
+  type: doc
+  manual_check: true
+  lint: git pre-commit hook scans for common secret patterns (future)
+added: 2026-04-13

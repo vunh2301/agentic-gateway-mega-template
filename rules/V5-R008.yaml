@@ -1,0 +1,17 @@
+id: V5-R008
+title: Empirical verify before claiming runtime state
+status: active
+category: empirical
+severity: critical
+description: |
+  Before asserting any runtime state ("service down", "file missing",
+  "process dead", "VM locked"), run a command with real output and read
+  it. Phrases like "Có thể là...", "Tôi tưởng...", "I think..." = CẤM.
+rationale: |
+  Wave 4 qa-tester incident (2026-04-12): agent claimed VMs locked at
+  LogonUI but user had active session. Empirical check would have
+  prevented hours of wasted debug.
+enforcement:
+  type: doc
+  skill: superpowers:systematic-debugging gate 1
+added: 2026-04-13

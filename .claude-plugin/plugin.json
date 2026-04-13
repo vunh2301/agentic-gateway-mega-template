@@ -1,0 +1,19 @@
+{
+  "name": "mega-template",
+  "description": "Spec-enforcement plugin for large multi-phase AI-agent projects. Combines hook-level gates, stable rule IDs, phase scope enforcement, and spec traceability. Designed to be pinned per-consumer-repo.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Justin",
+    "email": "vunh2301@gmail.com"
+  },
+  "repository": "https://github.com/vunh2301/agentic-gateway-mega-template",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "spec-enforcement",
+    "phase-gating",
+    "traceability",
+    "hard-gate"
+  ]
+}

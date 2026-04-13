@@ -1,0 +1,16 @@
+id: V5-R015
+title: Don't commit real config — only .example
+status: active
+category: security
+severity: high
+description: |
+  Commit only `*.config.example.yaml`, `.env.example`, template files.
+  Real config files (harness.config.yaml, .env) must be gitignored.
+  Tokens in config must reference env vars, not hardcoded values.
+rationale: |
+  Config files accumulate real credentials over time. Keeping them out
+  of git prevents accidental commits.
+enforcement:
+  type: doc
+  lint: .gitignore pre-populated from template
+added: 2026-04-13
