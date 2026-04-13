@@ -18,6 +18,7 @@ Single source of truth for plugin development.
 | 5 | ✅ done | Distribution (init.mjs + 4 templates + /spec-init /spec-status /phase-promote cmds) |
 | 6 | ✅ done | Self-dogfood + GitHub push |
 | 7 | ✅ done | Code review fixes (8 bugs) |
+| 8 | ✅ done | v0.2.0 flat layout support — `layout: flat\|monorepo` config field, 3 hooks branch, init --layout flag |
 
 ## Verification evidence
 

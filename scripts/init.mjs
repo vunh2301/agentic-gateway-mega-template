@@ -46,6 +46,7 @@ function parseArgs(argv) {
     else if (a === "--phase") out.phase = argv[++i];
     else if (a === "--sections") out.sections = argv[++i];
     else if (a === "--spec") out.spec = argv[++i];
+    else if (a === "--layout") out.layout = argv[++i];  // flat | monorepo
     else if (a === "--help" || a === "-h") {
       console.log("See top of init.mjs for usage");
       process.exit(0);
@@ -97,7 +98,7 @@ async function main() {
   const hookPrefix = detectHookPathPrefix(cwd);
   console.log(`[init] detected plugin path: ${hookPrefix}`);
 
-  let projectName, activePackage, activePhase, activeSections, specPath;
+  let projectName, activePackage, activePhase, activeSections, specPath, layout;
 
   if (args.nonInteractive) {
     projectName = args.project || "my-consumer";
@@ -105,7 +106,12 @@ async function main() {
     activePhase = args.phase || "phase-1";
     activeSections = args.sections || "2,3,4,5,6,7";
     specPath = args.spec || `docs/${activePackage}-spec.md`;
-    console.log(`[init] non-interactive: ${JSON.stringify({ projectName, activePackage, activePhase, activeSections, specPath })}`);
+    layout = args.layout || "monorepo";
+    if (!["flat", "monorepo"].includes(layout)) {
+      console.error(`[init] ERROR: --layout must be 'flat' or 'monorepo' (got '${layout}')`);
+      process.exit(1);
+    }
+    console.log(`[init] non-interactive: ${JSON.stringify({ projectName, activePackage, activePhase, activeSections, specPath, layout })}`);
   } else {
     const rl = readline.createInterface({ input, output });
     const ask = async (q, def = "") => {
@@ -118,8 +124,19 @@ async function main() {
     activePhase = await ask("Active phase name", args.phase || "phase-1");
     activeSections = await ask("Sections in active phase (comma-separated)", args.sections || "2,3,4,5,6,7");
     specPath = await ask("Spec document path", args.spec || `docs/${activePackage}-spec.md`);
+    layout = await ask("Layout (flat | monorepo)", args.layout || "monorepo");
+    if (!["flat", "monorepo"].includes(layout)) {
+      console.error(`[init] ERROR: layout must be 'flat' or 'monorepo'`);
+      await rl.close();
+      process.exit(1);
+    }
     await rl.close();
   }
+
+  // Path patterns based on layout
+  const activePaths = layout === "flat"
+    ? ["src/**", "tests/**"]
+    : [`packages/${activePackage}/src/**`, `packages/${activePackage}/tests/**`];
 
   const ctx = {
     PROJECT_NAME: projectName,
@@ -127,6 +144,8 @@ async function main() {
     ACTIVE_PHASE: activePhase,
     ACTIVE_SECTIONS: activeSections,
     SPEC_PATH: specPath,
+    LAYOUT: layout,
+    ACTIVE_PATHS: activePaths.map((p) => `      - ${p}`).join("\n"),
     DATE: new Date().toISOString().slice(0, 10),
     PACKAGES_CSV: activePackage,
     PACKAGES_TABLE:

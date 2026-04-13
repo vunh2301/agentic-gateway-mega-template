@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * PreToolUse hook: block Write/Edit on packages/*\/src/** without matching spec.
+ * PreToolUse hook: block Write/Edit on src files without matching spec.
  *
  * Rule IDs enforced: V5-R004 (spec-first), V5-R006 (no ad-hoc code)
  *
- * Logic:
- *   1. Check file path is under packages/<name>/src/**
- *   2. Search for spec file: docs/<name>*.md OR docs/*<name>*.md OR docs/plans/<name>*.md
- *   3. Exit 2 (deny) if missing, 0 (allow) otherwise
+ * Supports two layouts (via spec-index.yaml `layout:` field):
+ *   monorepo (default): packages/<pkg>/src/** — spec per package
+ *   flat:               src/** — single repo-wide spec declared in
+ *                       spec-index.yaml `spec:` field
  *
  * Exceptions: docs/**, .claude/**, *.md at root, tests, configs.
  *
  * Bypass: env CLAUDE_SKIP_HOOKS=1
  */
 
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 async function main() {
@@ -27,11 +27,40 @@ async function main() {
   const p = filePath.replace(/\\/g, "/");
   if (isExempt(p)) process.exit(0);
 
+  const repoRoot = findRepoRoot(dirname(filePath)) || process.cwd();
+  const { layout, specPath } = readLayoutConfig(repoRoot);
+
+  if (layout === "flat") {
+    // Match src/**.ts at repo root
+    if (!/(?:^|\/)src\/.+\.(ts|tsx|mjs|js|cjs)$/.test(p)) process.exit(0);
+
+    // Require spec-index.yaml `spec:` field points to an existing doc
+    if (!specPath) {
+      console.error(
+        `[mega:check-spec] BLOCKED: flat layout requires spec-index.yaml with 'spec:' field (V5-R004).\n` +
+        `  Fix: add 'spec: docs/<name>-spec.md' to spec-index.yaml.\n` +
+        `  Bypass: CLAUDE_SKIP_HOOKS=1.`
+      );
+      process.exit(2);
+    }
+    const fullSpec = join(repoRoot, specPath);
+    if (!existsSync(fullSpec)) {
+      console.error(
+        `[mega:check-spec] BLOCKED: spec file not found at ${specPath} (V5-R004).\n` +
+        `  File being written: ${p}\n` +
+        `  Fix: create ${specPath} or update spec-index.yaml 'spec:' field.\n` +
+        `  Bypass: CLAUDE_SKIP_HOOKS=1.`
+      );
+      process.exit(2);
+    }
+    process.exit(0);
+  }
+
+  // Default: monorepo layout
   const m = p.match(/\/packages\/([^/]+)\/src\//);
   if (!m) process.exit(0);
 
   const pkgName = m[1];
-  const repoRoot = findRepoRoot(dirname(filePath)) || process.cwd();
   const docsDir = join(repoRoot, "docs");
   const plansDir = join(docsDir, "plans");
   const specsDir = join(docsDir, "specs");
@@ -43,7 +72,7 @@ async function main() {
 
   if (!hasSpec) {
     console.error(
-      `[mega:check-spec] BLOCKED: no spec for package "${pkgName}" (rule V5-R004).\n` +
+      `[mega:check-spec] BLOCKED: no spec for package "${pkgName}" (V5-R004).\n` +
       `  Looked in: ${docsDir}\n` +
       `  Expected: docs/${pkgName}*.md OR docs/plans/${pkgName}*.md OR docs/specs/${pkgName}*.md\n` +
       `  Fix: invoke superpowers:brainstorming to generate spec first.\n` +
@@ -53,6 +82,26 @@ async function main() {
   }
 
   process.exit(0);
+}
+
+/**
+ * Read layout + spec path from spec-index.yaml. Defaults to monorepo for
+ * backward compat when file missing or field absent. No deps (R-PLUGIN-002).
+ */
+function readLayoutConfig(repoRoot) {
+  const yamlPath = join(repoRoot, "spec-index.yaml");
+  if (!existsSync(yamlPath)) return { layout: "monorepo", specPath: null };
+  try {
+    const content = readFileSync(yamlPath, "utf8");
+    const layoutM = content.match(/^layout:\s*(flat|monorepo)/m);
+    const specM = content.match(/^spec:\s*(.+)$/m);
+    return {
+      layout: layoutM ? layoutM[1] : "monorepo",
+      specPath: specM ? specM[1].trim().replace(/^["']|["']$/g, "") : null,
+    };
+  } catch {
+    return { layout: "monorepo", specPath: null };
+  }
 }
 
 function isExempt(p) {

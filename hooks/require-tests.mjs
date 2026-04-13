@@ -9,7 +9,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, basename } from "node:path";
 
 async function main() {
@@ -24,20 +24,28 @@ async function main() {
   const repoRoot = findRepoRoot(process.cwd());
   if (!repoRoot) process.exit(0);
 
+  const layout = readLayout(repoRoot);
+  const srcRegex = layout === "flat"
+    ? /^src\/.+\.(ts|tsx|mjs|js|cjs)$/
+    : /packages\/[^/]+\/src\/.+\.(ts|tsx|mjs|js|cjs)$/;
+
   const changed = getChangedFiles(repoRoot);
   const srcFiles = changed.filter(
     (f) =>
-      /packages\/[^/]+\/src\/.+\.(ts|tsx|mjs|js|cjs)$/.test(f) &&
+      srcRegex.test(f) &&
       !/\.(test|spec|d)\.(ts|mjs|js|cjs)$/.test(f)
   );
 
-  const missing = srcFiles.filter((f) => !hasMatchingTest(repoRoot, f));
+  const missing = srcFiles.filter((f) => !hasMatchingTest(repoRoot, f, layout));
 
   if (missing.length > 0) {
+    const expectedHint = layout === "flat"
+      ? "tests/**/foo.test.ts OR __tests__/foo.test.ts OR src/foo.test.ts alongside"
+      : "packages/<pkg>/tests/** OR __tests__/** OR foo.test.ts alongside";
     console.error(
       `[mega:require-tests] WARNING: commit created without matching tests for (V5-R006):\n` +
       missing.map((f) => `  - ${f}`).join("\n") +
-      `\n  Expected test: packages/<pkg>/tests/** OR __tests__/** OR foo.test.ts alongside.\n` +
+      `\n  Expected test: ${expectedHint}.\n` +
       `  Action: add tests + amend commit, or document skip reason in commit body.`
     );
   }
@@ -86,23 +94,52 @@ function getChangedFiles(repoRoot) {
   }
 }
 
-function hasMatchingTest(repoRoot, srcPath) {
-  const m = srcPath.match(/^packages\/([^/]+)\/src\/(.+)\.(ts|tsx|mjs|js|cjs)$/);
-  if (!m) return false;
-  const [, pkg, relNoExt, ext] = m;
-  const base = basename(relNoExt);
+function hasMatchingTest(repoRoot, srcPath, layout) {
+  let candidates = [];
 
-  const candidates = [
-    `packages/${pkg}/tests/${relNoExt}.test.${ext}`,
-    `packages/${pkg}/tests/${relNoExt}.spec.${ext}`,
-    `packages/${pkg}/tests/${base}.test.${ext}`,
-    `packages/${pkg}/tests/${base}.spec.${ext}`,
-    `packages/${pkg}/__tests__/${relNoExt}.test.${ext}`,
-    `packages/${pkg}/__tests__/${base}.test.${ext}`,
-    `packages/${pkg}/src/${relNoExt}.test.${ext}`,
-    `packages/${pkg}/src/${relNoExt}.spec.${ext}`,
-  ];
+  if (layout === "flat") {
+    const m = srcPath.match(/^src\/(.+)\.(ts|tsx|mjs|js|cjs)$/);
+    if (!m) return false;
+    const [, relNoExt, ext] = m;
+    const base = basename(relNoExt);
+    candidates = [
+      `tests/${relNoExt}.test.${ext}`,
+      `tests/${relNoExt}.spec.${ext}`,
+      `tests/${base}.test.${ext}`,
+      `tests/${base}.spec.${ext}`,
+      `__tests__/${relNoExt}.test.${ext}`,
+      `__tests__/${base}.test.${ext}`,
+      `src/${relNoExt}.test.${ext}`,
+      `src/${relNoExt}.spec.${ext}`,
+    ];
+  } else {
+    const m = srcPath.match(/^packages\/([^/]+)\/src\/(.+)\.(ts|tsx|mjs|js|cjs)$/);
+    if (!m) return false;
+    const [, pkg, relNoExt, ext] = m;
+    const base = basename(relNoExt);
+    candidates = [
+      `packages/${pkg}/tests/${relNoExt}.test.${ext}`,
+      `packages/${pkg}/tests/${relNoExt}.spec.${ext}`,
+      `packages/${pkg}/tests/${base}.test.${ext}`,
+      `packages/${pkg}/tests/${base}.spec.${ext}`,
+      `packages/${pkg}/__tests__/${relNoExt}.test.${ext}`,
+      `packages/${pkg}/__tests__/${base}.test.${ext}`,
+      `packages/${pkg}/src/${relNoExt}.test.${ext}`,
+      `packages/${pkg}/src/${relNoExt}.spec.${ext}`,
+    ];
+  }
   return candidates.some((c) => existsSync(join(repoRoot, c)));
+}
+
+function readLayout(repoRoot) {
+  const yamlPath = join(repoRoot, "spec-index.yaml");
+  if (!existsSync(yamlPath)) return "monorepo";
+  try {
+    const m = readFileSync(yamlPath, "utf8").match(/^layout:\s*(flat|monorepo)/m);
+    return m ? m[1] : "monorepo";
+  } catch {
+    return "monorepo";
+  }
 }
 
 async function readStdinJson() {

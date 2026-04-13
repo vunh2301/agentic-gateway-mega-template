@@ -17,14 +17,14 @@
 
 active_phase: {{ACTIVE_PHASE}}
 spec: {{SPEC_PATH}}
+layout: {{LAYOUT}}   # flat | monorepo (default: monorepo)
 
 phases:
   {{ACTIVE_PHASE}}:
     status: in-progress
     sections: [{{ACTIVE_SECTIONS}}]
     paths:
-      - packages/{{ACTIVE_PACKAGE}}/src/**
-      - packages/{{ACTIVE_PACKAGE}}/tests/**
+{{ACTIVE_PATHS}}
 
   # Example future phase (edit to match your spec):
   # phase-2:
@@ -32,4 +32,5 @@ phases:
   #   gate: "{{ACTIVE_PHASE}}.status == verified"
   #   sections: [8, 9]
   #   paths:
-  #     - packages/{{ACTIVE_PACKAGE}}/src/phase2/**
+  #     - src/phase2/**        # flat layout example
+  #     # OR packages/{{ACTIVE_PACKAGE}}/src/phase2/**  (monorepo)

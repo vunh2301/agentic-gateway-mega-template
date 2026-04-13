@@ -4,15 +4,17 @@
  *
  * Rule IDs: V5-R012 (traceability)
  *
- * When creating a NEW file (Write, not Edit on existing) under
- * packages/*\/src/, check the content contains an @spec() annotation:
- *   // @spec(phase=1,section=3.2)
- *   /** @spec(phase=1,req=V5-R001) *\/
+ * Supports two layouts (via spec-index.yaml `layout:` field):
+ *   monorepo (default): packages/<pkg>/src/**
+ *   flat:               src/** at repo root
  *
  * Edits to EXISTING files are exempt (annotation may exist elsewhere in file).
  *
  * R-PLUGIN-001: fail-open on crash. Exit 2 = deny, 0 = allow.
  */
+
+import { existsSync, readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
 
 async function main() {
   if (process.env.CLAUDE_SKIP_HOOKS === "1") process.exit(0);
@@ -32,10 +34,15 @@ async function main() {
   const p = filePath.replace(/\\/g, "/");
   if (isExempt(p)) process.exit(0);
 
-  // Only target TS/JS source under packages/*/src/
-  if (!/\/packages\/[^/]+\/src\/.+\.(ts|tsx|mjs|js|cjs)$/.test(p)) {
-    process.exit(0);
-  }
+  const repoRoot = findRepoRoot(dirname(filePath)) || process.cwd();
+  const layout = readLayout(repoRoot);
+
+  // Target src files based on layout
+  const isSrc = layout === "flat"
+    ? /(?:^|\/)src\/.+\.(ts|tsx|mjs|js|cjs)$/.test(p)
+    : /\/packages\/[^/]+\/src\/.+\.(ts|tsx|mjs|js|cjs)$/.test(p);
+
+  if (!isSrc) process.exit(0);
 
   // Skip test files (already exempted above by isExempt, but double-check)
   if (/\.(test|spec)\./.test(p)) process.exit(0);
@@ -69,6 +76,28 @@ async function readStdinJson() {
   let raw = "";
   for await (const chunk of process.stdin) raw += chunk;
   try { return JSON.parse(raw); } catch { return null; }
+}
+
+function findRepoRoot(start) {
+  let dir = start;
+  for (let i = 0; i < 12; i++) {
+    if (existsSync(join(dir, ".git"))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
+}
+
+function readLayout(repoRoot) {
+  const yamlPath = join(repoRoot, "spec-index.yaml");
+  if (!existsSync(yamlPath)) return "monorepo";
+  try {
+    const m = readFileSync(yamlPath, "utf8").match(/^layout:\s*(flat|monorepo)/m);
+    return m ? m[1] : "monorepo";
+  } catch {
+    return "monorepo";
+  }
 }
 
 main().catch((e) => {
