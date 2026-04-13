@@ -9,6 +9,8 @@ done/partial/blocked per rule V5-R003.
 
 ## Packages
 
+| Package | Status | Spec |
+|---------|--------|------|
 {{PACKAGES_TABLE}}
 
 ## Session log

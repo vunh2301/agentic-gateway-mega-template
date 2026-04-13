@@ -3,21 +3,30 @@
  * mega-template-init — bootstrap a consumer repo with the enforcement layer.
  *
  * Usage:
- *   cd <consumer-repo>
+ *   # Interactive (default):
  *   npx -p @agentic-gateway/mega-template mega-template-init
+ *
+ *   # Non-interactive (CI-safe, uses defaults or --flags):
+ *   npx -p @agentic-gateway/mega-template mega-template-init \
+ *       --non-interactive \
+ *       --project my-consumer \
+ *       --package memory-consumer \
+ *       --phase phase-1 \
+ *       --sections 2,3,4,5 \
+ *       --spec docs/memory-consumer-spec.md
  *
  * What it does:
  *   1. Verify cwd is a git repo (fail if not)
- *   2. Copy .claude/settings.json (with hooks wired to plugin path)
- *   3. Generate CLAUDE.md from templates/CLAUDE.md.tpl (interactive prompts)
- *   4. Generate AGENTS.md, PROGRESS.md, spec-index.yaml
+ *   2. Auto-detect plugin location (npm vs Claude Code marketplace)
+ *   3. Generate .claude/settings.json (hooks wired to detected path)
+ *   4. Generate CLAUDE.md, AGENTS.md, PROGRESS.md, spec-index.yaml
  *   5. Append to .gitignore if needed
  *   6. Print next-steps guide
  *
- * Idempotent: if files exist, prompts before overwriting.
+ * Idempotent: skips existing files (does NOT overwrite; delete first to regen).
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import readline from "node:readline/promises";
@@ -27,8 +36,55 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const pluginRoot = dirname(__dirname);
 const templatesDir = join(pluginRoot, "templates");
 
+function parseArgs(argv) {
+  const out = { nonInteractive: false };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--non-interactive" || a === "-n") out.nonInteractive = true;
+    else if (a === "--project") out.project = argv[++i];
+    else if (a === "--package") out.package = argv[++i];
+    else if (a === "--phase") out.phase = argv[++i];
+    else if (a === "--sections") out.sections = argv[++i];
+    else if (a === "--spec") out.spec = argv[++i];
+    else if (a === "--help" || a === "-h") {
+      console.log("See top of init.mjs for usage");
+      process.exit(0);
+    }
+  }
+  return out;
+}
+
+/**
+ * Detect how the plugin is installed so settings.json references correct
+ * hook paths. Returns a path prefix like "node_modules/@agentic-gateway/..."
+ * or ".claude/plugins/marketplaces/..." depending on install layout.
+ *
+ * Detection order:
+ *   1. `pluginRoot` contains "node_modules" → npm install path
+ *   2. `pluginRoot` contains "plugins/cache" or "marketplaces" → CC plugin
+ *   3. Else: absolute path (fallback, less portable)
+ */
+function detectHookPathPrefix(cwd) {
+  const root = pluginRoot.replace(/\\/g, "/");
+  const cwdN = cwd.replace(/\\/g, "/");
+
+  if (root.includes("/node_modules/")) {
+    return "node_modules/@agentic-gateway/mega-template/hooks";
+  }
+  if (root.includes("/plugins/cache/") || root.includes("/plugins/marketplaces/")) {
+    // Claude Code plugin — use absolute path (works regardless of consumer cwd)
+    return root + "/hooks";
+  }
+  // Dev fallback: relative from consumer to plugin repo
+  if (root.startsWith(cwdN)) {
+    return root.slice(cwdN.length + 1) + "/hooks";
+  }
+  return root + "/hooks";
+}
+
 async function main() {
   const cwd = process.cwd();
+  const args = parseArgs(process.argv.slice(2));
 
   // 1. Verify git repo
   if (!existsSync(join(cwd, ".git"))) {
@@ -38,18 +94,32 @@ async function main() {
 
   console.log(`\n[mega-template-init] bootstrapping consumer repo at ${cwd}\n`);
 
-  const rl = readline.createInterface({ input, output });
-  const ask = async (q, def = "") => {
-    const a = (await rl.question(`${q}${def ? ` [${def}]` : ""}: `)).trim();
-    return a || def;
-  };
+  const hookPrefix = detectHookPathPrefix(cwd);
+  console.log(`[init] detected plugin path: ${hookPrefix}`);
 
-  // Interactive prompts
-  const projectName = await ask("Project name", "my-consumer");
-  const activePackage = await ask("Active package name", "memory-consumer");
-  const activePhase = await ask("Active phase name", "phase-1");
-  const activeSections = await ask("Sections in active phase (comma-separated)", "2,3,4,5,6,7");
-  const specPath = await ask("Spec document path", `docs/${activePackage}-spec.md`);
+  let projectName, activePackage, activePhase, activeSections, specPath;
+
+  if (args.nonInteractive) {
+    projectName = args.project || "my-consumer";
+    activePackage = args.package || "memory-consumer";
+    activePhase = args.phase || "phase-1";
+    activeSections = args.sections || "2,3,4,5,6,7";
+    specPath = args.spec || `docs/${activePackage}-spec.md`;
+    console.log(`[init] non-interactive: ${JSON.stringify({ projectName, activePackage, activePhase, activeSections, specPath })}`);
+  } else {
+    const rl = readline.createInterface({ input, output });
+    const ask = async (q, def = "") => {
+      const a = (await rl.question(`${q}${def ? ` [${def}]` : ""}: `)).trim();
+      return a || def;
+    };
+
+    projectName = await ask("Project name", args.project || "my-consumer");
+    activePackage = await ask("Active package name", args.package || "memory-consumer");
+    activePhase = await ask("Active phase name", args.phase || "phase-1");
+    activeSections = await ask("Sections in active phase (comma-separated)", args.sections || "2,3,4,5,6,7");
+    specPath = await ask("Spec document path", args.spec || `docs/${activePackage}-spec.md`);
+    await rl.close();
+  }
 
   const ctx = {
     PROJECT_NAME: projectName,
@@ -65,15 +135,13 @@ async function main() {
     PHASE2_DESC: `(define in spec-index.yaml)`,
   };
 
-  await rl.close();
-
   // 2. .claude/settings.json
   const claudeDir = join(cwd, ".claude");
   if (!existsSync(claudeDir)) mkdirSync(claudeDir, { recursive: true });
 
   const settingsPath = join(claudeDir, "settings.json");
-  const settings = generateSettings(pluginRoot);
-  writeIfAbsentOrConfirm(settingsPath, JSON.stringify(settings, null, 2) + "\n");
+  const settings = generateSettings(hookPrefix);
+  writeIfAbsent(settingsPath, JSON.stringify(settings, null, 2) + "\n");
 
   // 3-5. Generate files from templates
   const filesToGen = [
@@ -90,7 +158,7 @@ async function main() {
       continue;
     }
     const content = renderTemplate(readFileSync(tplPath, "utf8"), ctx);
-    writeIfAbsentOrConfirm(join(cwd, out), content);
+    writeIfAbsent(join(cwd, out), content);
   }
 
   // 6. .gitignore additions
@@ -126,9 +194,8 @@ async function main() {
   console.log("");
 }
 
-function generateSettings(pluginRoot) {
-  // Use relative paths via node resolution (plugin in node_modules)
-  const h = "node_modules/@agentic-gateway/mega-template/hooks";
+function generateSettings(hookPrefix) {
+  const h = hookPrefix;
   return {
     permissions: { allow: ["Bash(*)", "Read(*)", "Write(*)", "Edit(*)", "Glob(*)", "Grep(*)", "Skill(*)", "Agent(*)"] },
     hooks: {
@@ -159,7 +226,12 @@ function renderTemplate(tpl, ctx) {
   return tpl.replace(/\{\{([A-Z_0-9]+)\}\}/g, (_, k) => ctx[k] ?? `{{${k}}}`);
 }
 
-function writeIfAbsentOrConfirm(path, content) {
+/**
+ * Write file only if absent. Existing files are NEVER overwritten — user
+ * must delete manually to regenerate. This is idempotent by design: repeat
+ * runs of init.mjs are safe and never clobber edits.
+ */
+function writeIfAbsent(path, content) {
   if (existsSync(path)) {
     console.log(`[init] ${path} already exists — skipping (delete first to regenerate)`);
     return;

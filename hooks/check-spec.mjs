@@ -86,13 +86,20 @@ function hasMatchingFile(dir, pkgName) {
   try {
     const entries = readdirSync(dir, { withFileTypes: true });
     const lowerPkg = pkgName.toLowerCase();
+    // Boundary-aware match: pkgName must be followed by `-`, `.`, `_`, or end.
+    // Prevents false positives: "mem" should NOT match "memory-consumer-spec.md".
+    const boundary = new RegExp(`(^|[^a-z0-9])${escapeRegex(lowerPkg)}([-_.]|$)`);
     return entries.some(
       (e) => e.isFile() && e.name.toLowerCase().endsWith(".md") &&
-             e.name.toLowerCase().includes(lowerPkg)
+             boundary.test(e.name.toLowerCase())
     );
   } catch {
     return false;
   }
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 async function readStdinJson() {

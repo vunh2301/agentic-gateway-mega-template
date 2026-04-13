@@ -12,7 +12,8 @@ rationale: |
   like a third-party integration. Source imports break this abstraction
   and create brittle coupling.
 enforcement:
-  type: hook
-  hook: check-spec-coverage
-  lint: grep for forbidden imports via eslint rule
+  type: doc
+  manual_check: true
+  lint: eslint rule `no-restricted-imports` with Gateway source paths
+  planned_hook: check-imports (not yet implemented — v0.2)
 added: 2026-04-13

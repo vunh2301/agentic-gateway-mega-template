@@ -7,7 +7,7 @@
  * Non-blocking — always exit 0.
  */
 
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 async function main() {
@@ -19,6 +19,10 @@ async function main() {
   const lines = [];
   lines.push("[MEGA-TEMPLATE CONTEXT]");
 
+  // Session-start detection (3 entry flows)
+  const state = detectRepoState(repoRoot);
+  if (state.suggestion) lines.push(`➤ ${state.suggestion}`);
+
   // Active phase from spec-index.yaml
   const yamlPath = join(repoRoot, "spec-index.yaml");
   if (existsSync(yamlPath)) {
@@ -27,8 +31,6 @@ async function main() {
       const m = y.match(/^active_phase:\s*(.+)$/m);
       if (m) lines.push(`Active phase: ${m[1].trim()}`);
     } catch {}
-  } else {
-    lines.push("Active phase: (no spec-index.yaml yet — run /spec-init)");
   }
 
   // Active package from PROGRESS.md
@@ -37,7 +39,7 @@ async function main() {
   const pkgMatch = progress.match(/##\s*Active package\s*\n+\s*\*\*([^*]+)\*\*/i);
   if (pkgMatch) lines.push(`Active package: ${pkgMatch[1].trim()}`);
 
-  if (isStale(progressPath, 7)) {
+  if (existsSync(progressPath) && isStale(progressPath, 7)) {
     lines.push("⚠ PROGRESS.md >7 days stale — verify current state.");
   }
 
@@ -56,6 +58,56 @@ async function main() {
 
   process.stdout.write(lines.join("\n") + "\n");
   process.exit(0);
+}
+
+/**
+ * Detect repo state to suggest next action (3 entry flows + beyond).
+ * Runs on every session start via UserPromptSubmit. Read-only.
+ */
+function detectRepoState(repoRoot) {
+  const hasClaude = existsSync(join(repoRoot, ".claude"));
+  const hasClaudeMd = existsSync(join(repoRoot, "CLAUDE.md"));
+  const hasSpecIndex = existsSync(join(repoRoot, "spec-index.yaml"));
+  const hasPackages = existsSync(join(repoRoot, "packages"));
+  const specsDir = join(repoRoot, "docs", "specs");
+  const plansDir = join(repoRoot, "docs", "plans");
+  const hasAnySpec = existsSync(specsDir) && readdirSafe(specsDir).some((f) => f.endsWith(".md"));
+  const hasAnyPlan = existsSync(plansDir) && readdirSafe(plansDir).some((f) => f.endsWith(".md"));
+
+  if (!hasClaude || !hasClaudeMd) {
+    return { suggestion: "New repo detected. Run: npx mega-template-init to bootstrap enforcement." };
+  }
+  if (!hasSpecIndex) {
+    return { suggestion: "Enforcement installed but no spec-index.yaml. Run /spec-init to declare phases." };
+  }
+  if (!hasAnySpec && hasPackages) {
+    return { suggestion: "spec-index.yaml exists but docs/specs/ empty. Say 'I want to build <feature>' → superpowers:brainstorming fires." };
+  }
+  if (hasAnySpec && !hasAnyPlan) {
+    return { suggestion: "Spec drafted but no plan. Say 'Write the plan' → superpowers:writing-plans fires." };
+  }
+  if (hasAnyPlan) {
+    const openTasks = countOpenTasks(plansDir);
+    if (openTasks > 0) {
+      return { suggestion: `Plan has ${openTasks} open task(s). Resume with superpowers:executing-plans or /oh-my-claudecode:ralph.` };
+    }
+    return { suggestion: "All plan tasks done. Run /phase-promote to advance." };
+  }
+  return { suggestion: null };
+}
+
+function readdirSafe(p) {
+  try { return readdirSync(p); } catch { return []; }
+}
+
+function countOpenTasks(plansDir) {
+  let count = 0;
+  for (const f of readdirSafe(plansDir)) {
+    if (!f.endsWith(".md")) continue;
+    const content = safeRead(join(plansDir, f));
+    count += (content.match(/^\s*-\s*\[\s*\]/gm) || []).length;
+  }
+  return count;
 }
 
 function findRepoRoot(start) {
@@ -84,7 +136,6 @@ function isStale(path, days) {
 
 function loadRulesDigest(rulesDir) {
   try {
-    const { readdirSync } = require("node:fs");
     const files = readdirSync(rulesDir).filter((f) => f.endsWith(".yaml")).sort();
     const picks = files.slice(0, 8).map((f) => {
       const content = safeRead(join(rulesDir, f));

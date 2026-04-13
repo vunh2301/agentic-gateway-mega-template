@@ -14,8 +14,6 @@
  * R-PLUGIN-001: fail-open on crash. Exit 2 = deny, 0 = allow.
  */
 
-import { existsSync } from "node:fs";
-
 async function main() {
   if (process.env.CLAUDE_SKIP_HOOKS === "1") process.exit(0);
 
@@ -56,9 +54,6 @@ async function main() {
     );
     process.exit(2);
   }
-
-  // If file already existed, fall through (should not happen with Write, but safety)
-  if (existsSync(filePath)) process.exit(0);
 
   process.exit(0);
 }

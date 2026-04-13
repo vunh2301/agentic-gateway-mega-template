@@ -73,7 +73,9 @@ function findRepoRoot(start) {
 
 function getChangedFiles(repoRoot) {
   try {
-    return execSync("git diff-tree --no-commit-id --name-only -r HEAD", {
+    // `-r HEAD` fails on initial commit (no parent). `--root` makes it list
+    // all files of the root commit instead.
+    return execSync("git diff-tree --no-commit-id --name-only -r --root HEAD", {
       cwd: repoRoot,
       encoding: "utf8",
     })

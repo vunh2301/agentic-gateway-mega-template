@@ -161,77 +161,76 @@ function matchGlob(path, pattern) {
 
 /**
  * Minimal YAML parser for spec-index.yaml only. Supports:
- *   - key: value
- *   - key:
- *       nested: value
- *   - array: [item1, item2]
- *   - array:
- *       - item
- * Does NOT support: anchors, multi-line strings, complex types.
- * R-PLUGIN-002: no npm deps allowed in hooks.
+ *   key: value
+ *   key:
+ *     nested: value
+ *   inline_array: [item1, item2]
+ *   block_array:
+ *     - item1
+ *     - item2
+ *   mixed (object + block_array siblings at same indent level)
+ *
+ * Does NOT support: anchors, multi-line strings, complex types, flow sequences
+ * with nested objects. R-PLUGIN-002: no npm deps allowed in hooks.
+ *
+ * Stack tracks (container, parent, keyInParent, indent). When we see `- item`
+ * at a new indent, we convert the parent's key slot to an array if it wasn't
+ * already one (auto-detection — no `_last` hack).
  */
 function parseMiniYaml(text) {
   const lines = text.split(/\r?\n/);
   const root = {};
-  const stack = [{ obj: root, indent: -1 }];
+  // Stack frame: { container, parent, keyInParent, indent }
+  const stack = [{ container: root, parent: null, keyInParent: null, indent: -1 }];
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const line of lines) {
     const trimmed = line.replace(/#.*$/, "").trimEnd();
     if (!trimmed.trim()) continue;
 
     const indent = line.length - line.trimStart().length;
     const content = trimmed.trim();
 
+    // Pop frames until current indent is strictly greater than top frame's indent
     while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
       stack.pop();
     }
-    const parent = stack[stack.length - 1].obj;
+    let ctx = stack[stack.length - 1];
 
     // Array item
     if (content.startsWith("- ")) {
+      // If current container is not an array, convert. Replace in parent.
+      if (!Array.isArray(ctx.container)) {
+        const arr = [];
+        if (ctx.parent && ctx.keyInParent != null) {
+          ctx.parent[ctx.keyInParent] = arr;
+        }
+        // Mutate frame in place so subsequent items push to same array
+        ctx.container = arr;
+      }
       const val = parseValue(content.slice(2).trim());
-      if (!Array.isArray(parent._last)) parent._last = [];
-      parent._last.push(val);
+      ctx.container.push(val);
       continue;
     }
 
-    // key: value
+    // key: value (parent must be object, not array)
+    if (Array.isArray(ctx.container)) continue; // skip malformed
+
     const kvMatch = content.match(/^([^:]+):\s*(.*)$/);
     if (!kvMatch) continue;
     const key = kvMatch[1].trim();
     const val = kvMatch[2].trim();
 
     if (val === "") {
-      // Nested — reserve _last for array accumulation, real value decided on next line
+      // Nested: create empty object. If next line is `- item`, we'll convert to array.
       const child = {};
-      parent[key] = child;
-      // Track _last for arrays
-      Object.defineProperty(parent, "_last", { value: child, writable: true, configurable: true, enumerable: false });
-      // If next non-empty line is `- item`, child becomes array
-      stack.push({ obj: child, indent });
+      ctx.container[key] = child;
+      stack.push({ container: child, parent: ctx.container, keyInParent: key, indent });
     } else {
-      parent[key] = parseValue(val);
+      ctx.container[key] = parseValue(val);
     }
   }
 
-  // Collapse _last arrays
-  collapseLast(root);
   return root;
-}
-
-function collapseLast(obj) {
-  if (obj === null || typeof obj !== "object") return;
-  for (const k of Object.keys(obj)) {
-    const v = obj[k];
-    if (v && typeof v === "object" && !Array.isArray(v)) {
-      if (Array.isArray(v._last)) {
-        obj[k] = v._last;
-        continue;
-      }
-      collapseLast(v);
-    }
-  }
 }
 
 function parseValue(v) {

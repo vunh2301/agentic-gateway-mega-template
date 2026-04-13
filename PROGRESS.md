@@ -16,7 +16,8 @@ Single source of truth for plugin development.
 | 3 | ✅ done | Phase gating (spec-index.yaml format + hook + most-specific match) |
 | 4 | ✅ done | Traceability (`@spec()` convention + spec-coverage.mjs + orphan-sweep.mjs) |
 | 5 | ✅ done | Distribution (init.mjs + 4 templates + /spec-init /spec-status /phase-promote cmds) |
-| 6 | 🟡 in-progress | Self-dogfood .claude/settings.json + GitHub push + first consumer |
+| 6 | ✅ done | Self-dogfood + GitHub push |
+| 7 | ✅ done | Code review fixes (8 bugs) |
 
 ## Verification evidence
 
@@ -39,6 +40,21 @@ Single source of truth for plugin development.
 - Phase 4: @spec convention + spec-coverage.mjs + orphan-sweep.mjs
 - Phase 5: init.mjs + 4 templates (CLAUDE/AGENTS/PROGRESS/spec-index.yaml) + 3 slash cmds
 - Phase 6: LICENSE, self-dogfood `.claude/settings.json`, phase-gate integration test PASS
+- Phase 7 (code review fixes after external review, score 7.5/10 → ship-ready):
+  - CRITICAL: load-context.mjs `require()` in ESM → import `readdirSync` at top
+  - load-context.mjs: added 3-entry-flow detection (new repo / no spec-index / no spec / no plan / open tasks / advance phase)
+  - check-phase-gate.mjs: rewrote YAML parser to handle mixed object + block-array siblings (no more `_last` hack)
+  - check-spec.mjs: boundary-aware match (`mem` no longer matches `memory-consumer-spec.md`)
+  - check-spec-coverage.mjs: removed dead `existsSync` check + unused import
+  - require-tests.mjs: added `--root` flag for initial commit edge case
+  - V5-R004.yaml: fixed wrong enforcement mapping (`check-spec-coverage` was wrong; switched to doc + planned_hook)
+  - init.mjs: `--non-interactive` mode + plugin path auto-detection (npm vs marketplace vs dev) + renamed `writeIfAbsent`
+  - PROGRESS.md.tpl: added `| Package | Status | Spec |` header
+- Integration tests all PASS:
+  - YAML parser mixed syntax (phase-1 with nested object + block array, phase-2 future)
+  - load-context prints suggestion for each entry flow state
+  - init.mjs --non-interactive mode generates correct files on fresh repo
+  - check-spec boundary match rejects `mem` when only `memory-consumer-spec.md` exists
 
 ## First consumer
 
