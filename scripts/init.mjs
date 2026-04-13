@@ -29,6 +29,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 
@@ -47,6 +48,7 @@ function parseArgs(argv) {
     else if (a === "--sections") out.sections = argv[++i];
     else if (a === "--spec") out.spec = argv[++i];
     else if (a === "--layout") out.layout = argv[++i];  // flat | monorepo
+    else if (a === "--no-git-init") out.noGitInit = true;
     else if (a === "--help" || a === "-h") {
       console.log("See top of init.mjs for usage");
       process.exit(0);
@@ -87,10 +89,19 @@ async function main() {
   const cwd = process.cwd();
   const args = parseArgs(process.argv.slice(2));
 
-  // 1. Verify git repo
+  // 1. Verify git repo (auto-init if missing, unless opted out)
   if (!existsSync(join(cwd, ".git"))) {
-    console.error(`[init] ERROR: ${cwd} is not a git repo. Run 'git init' first.`);
-    process.exit(1);
+    if (args.noGitInit) {
+      console.error(`[init] ERROR: ${cwd} is not a git repo and --no-git-init was set.`);
+      process.exit(1);
+    }
+    console.log(`[init] no .git/ found — running 'git init' (use --no-git-init to opt out)`);
+    try {
+      execSync("git init", { cwd, stdio: "inherit" });
+    } catch (e) {
+      console.error(`[init] ERROR: 'git init' failed: ${e.message}`);
+      process.exit(1);
+    }
   }
 
   console.log(`\n[mega-template-init] bootstrapping consumer repo at ${cwd}\n`);

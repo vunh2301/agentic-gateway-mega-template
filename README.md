@@ -45,7 +45,15 @@ npm install @agentic-gateway/mega-template
 npx mega-template-init
 ```
 
+If `.git/` is missing, `init` auto-runs `git init` (opt out with `--no-git-init`).
+
 Interactive prompts ask 5 questions (project, package, phase, sections, spec path).
+
+> **PowerShell 5 note:** `&&` is not supported. Use `;` to chain commands, or
+> run on separate lines. Example:
+> ```powershell
+> npm install @agentic-gateway/mega-template ; npx mega-template-init
+> ```
 
 ### Non-interactive (CI-safe)
 
