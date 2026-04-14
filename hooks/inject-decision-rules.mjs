@@ -38,7 +38,7 @@ import { join, dirname } from "node:path";
 
 const DEFAULTS = {
   enabled: true,
-  auto_apply: ["V5-R011", "V5-R030", "V5-R053", "V5-R054"],
+  auto_apply: ["V5-R011", "V5-R030", "V5-R053", "V5-R054", "V5-R061"],
   constraint_defaults: [
     "hot_path_purity",
     "session_ended_trigger",
@@ -50,6 +50,9 @@ const DEFAULTS = {
     "oversight_level",
     "external_api_design",
   ],
+  auto_continue: {
+    enabled: true,
+  },
 };
 
 const CONSTRAINT_DESCRIPTIONS = {
@@ -122,6 +125,19 @@ function buildGuidance(cfg, ruleDescriptions) {
   lines.push("  - If topic is in user_choice → ask user (legitimate preference).");
   lines.push("  - Contrarian/drift-check rounds after a decision is already made → skip unless user explicitly asks.");
   lines.push("");
+  if (cfg.auto_continue?.enabled) {
+    lines.push("Slice auto-continue (V5-R061):");
+    lines.push("  After a slice completes with all gates pass, auto-continue to the next pending");
+    lines.push("  slice in workflow.json WITHOUT asking the user. Log 'auto-continued slice-NN per");
+    lines.push("  V5-R061' in the next commit body. PAUSE only if:");
+    lines.push("    - current slice has pauseAfter:true in workflow.json");
+    lines.push("    - auto_continue.enabled:false in spec-index.yaml");
+    lines.push("    - phase boundary (no more pending slices) → /phase-promote");
+    lines.push("    - Gate 4.5 reviews missing or blocking → /phase-review");
+    lines.push("    - user_choice topic triggered");
+    lines.push("    - off-topic drift warning");
+    lines.push("");
+  }
   lines.push("Audit (V5-R058): every auto-decision must be traceable. Include rule-id in commit body or response text.");
   lines.push("Bypass: set decisions.enabled=false in spec-index.yaml if user wants fully interactive mode.");
   lines.push("</decision-guidance>");
@@ -136,11 +152,16 @@ function readDecisionConfig(repoRoot) {
     const block = extractTopLevelBlock(yaml, "decisions");
     if (!block) return DEFAULTS;
     const enabled = !/^\s+enabled:\s*false/m.test(block);
+    const autoContinueM = block.match(/auto_continue:\s*\n\s+enabled:\s*(true|false)/m);
+    const autoContinue = autoContinueM
+      ? { enabled: autoContinueM[1] === "true" }
+      : DEFAULTS.auto_continue;
     return {
       enabled,
       auto_apply: parseListField(block, "auto_apply") ?? DEFAULTS.auto_apply,
       constraint_defaults: parseListField(block, "constraint_defaults") ?? DEFAULTS.constraint_defaults,
       user_choice: parseListField(block, "user_choice") ?? DEFAULTS.user_choice,
+      auto_continue: autoContinue,
     };
   } catch {
     return DEFAULTS;

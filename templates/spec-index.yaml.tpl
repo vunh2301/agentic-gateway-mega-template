@@ -93,6 +93,7 @@ decisions:
     - V5-R030   # TDD-first ordering
     - V5-R053   # commit-prefix exclusions for docs/chore/etc
     - V5-R054   # session-mode verification
+    - V5-R061   # slice auto-continue (opt-out via pauseAfter per slice)
   constraint_defaults:
     - hot_path_purity
     - session_ended_trigger
@@ -102,3 +103,8 @@ decisions:
     - scope_prioritization
     - oversight_level
     - external_api_design
+  auto_continue:
+    enabled: true            # default: auto-continue after clean slice pass
+                             # Set to false for fully interactive mode (ask every slice).
+                             # Per-slice override: set `"pauseAfter": true` on a slice in
+                             # .omc/state/workflow.json to force a pause after that slice.

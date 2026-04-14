@@ -34,6 +34,7 @@ Single source of truth for plugin development.
 | 21 | ✅ done | v0.9.2 — stdin timeout guard on all 12 hooks (fix infinite hang when harness does not signal EOF; observed in Windows git commit scenarios) |
 | 22 | ✅ done | v0.9.3 — HOTFIX: v0.9.2 Promise.race did not exit process (event loop still busy); now destroys stdin at 1.5s + hard-kill timer at 3s to guarantee exit |
 | 23 | ✅ done | v0.9.4 — HARD SAFETY: unconditional `setTimeout(exit, 2500)` at main() entry in every hook, no `.unref()`, cannot be defeated by any async hang |
+| 24 | ✅ done | v0.9.5 — V5-R061 slice auto-continue (default on, opt-out via spec-index `auto_continue.enabled:false` or per-slice `pauseAfter:true` in workflow.json) |
 
 ## Verification evidence
 

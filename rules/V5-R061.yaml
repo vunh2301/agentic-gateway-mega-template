@@ -1,0 +1,50 @@
+id: V5-R061
+title: Slice boundary — auto-continue by default, opt-in pause
+status: active
+category: enforcement
+severity: medium
+description: |
+  After a slice completes with all Gate 3 + Gate 4 checks pass, the agent
+  MUST auto-continue to the next pending slice in workflow.json WITHOUT
+  asking the user, unless one of these pause signals is present:
+
+    1. Current slice has `"pauseAfter": true` in workflow.json
+       → explicit per-slice oversight
+    2. Global `auto_continue.enabled: false` in spec-index.yaml
+       → fully interactive mode
+    3. Phase boundary reached (no more pending slices)
+       → stop for user to trigger /phase-promote (Gate 5)
+    4. Gate 4.5 (`.omc/reviews/<phase>-*.md`) not yet present or blocking
+       → pause to run /phase-review
+    5. User_choice topic triggered (scope prioritization, external API, etc)
+       → legitimate preference ask
+    6. Off-topic drift warning injected by load-context
+       → agent must clarify with user
+
+  Default behaviour is auto-continue. Asking "Bạn muốn tiếp tục slice-N+1
+  không?" after a clean pass is ceremonial overhead and a design flaw in
+  pre-v0.9.5 workflow. Opt in to the old behaviour by flagging specific
+  slices with `pauseAfter: true`.
+
+  Log `auto-continued slice-NN per V5-R061` in the next commit body so
+  human reviewers can trace the decision chain.
+rationale: |
+  Cheap models (kimi, haiku) default to conservative "ask everything"
+  behaviour, which wastes user attention on deterministic transitions.
+  For linear sequential plans (workflow.json typical case), the next
+  slice is the only valid option — making the ask pure ceremony.
+  Explicit opt-in via `pauseAfter` retains oversight for slices that
+  genuinely need a decision point (schema migration, external integration,
+  material scope shift), without imposing that overhead on every slice.
+
+  Safety nets preserved:
+  - Gate 4.5 still mandatory before phase-promote
+  - check-phase-gate still blocks out-of-scope writes
+  - enforce-slice-order still rejects mismatched commits
+  - User can /oh-my-claudecode:cancel any time
+
+enforcement:
+  type: hook
+  hook: inject-decision-rules
+  config: spec-index.yaml#auto_continue
+added: 2026-04-14
