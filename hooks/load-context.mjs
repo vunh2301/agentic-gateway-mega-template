@@ -16,7 +16,52 @@ async function main() {
   const repoRoot = findRepoRoot(process.cwd());
   if (!repoRoot) process.exit(0);
 
+  // Read user prompt from stdin payload so we can classify intent
+  const payload = await readStdinJson();
+  const userPrompt = payload?.prompt || "";
+
   const lines = [];
+
+  // === Mandatory workflow protocol (always injected) ===
+  // Keeps Gate-1 behaviour enforceable at prompt time, not just at Write time.
+  // Rule V5-R001 (read state first), V5-R002 (plan before code).
+  lines.push("<workflow-protocol mandatory=\"true\">");
+  lines.push("This repo is mega-template-enforced. Before ANY Write/Edit in a");
+  lines.push("new conversation, you MUST:");
+  lines.push("  1. Read CLAUDE.md + PROGRESS.md + spec-index.yaml + active spec doc.");
+  lines.push("  2. Produce a state table: Active phase / Sections / Status / Next.");
+  lines.push("  3. Wait for user approval of proposed next task before code.");
+  lines.push("  4. For non-trivial work (>1 file, new feature), invoke");
+  lines.push("     /oh-my-claudecode:ralplan before Write/Edit.");
+  lines.push("Harness hooks (check-spec, check-phase-gate, check-spec-coverage,");
+  lines.push("enforce-tdd, check-review-evidence) will block violations at tool time,");
+  lines.push("but treat this protocol as primary — fewer failed tool calls.");
+  lines.push("Trivial exceptions (V5-R007): typo/rename/comment-only changes skip");
+  lines.push("steps 2-4 — but still read state first.");
+  lines.push("</workflow-protocol>");
+  lines.push("");
+
+  // Intent classifier — strengthen protocol when user signals coding work
+  const intent = classifyIntent(userPrompt);
+  if (intent !== "none") {
+    lines.push(`<prompt-classifier intent="${intent}">`);
+    if (intent === "coding") {
+      lines.push("Prompt signals code change (add/build/implement/fix/refactor).");
+      lines.push("If this is a fresh conversation OR you have not confirmed state");
+      lines.push("in this thread, DO NOT call Write/Edit. Start with the protocol");
+      lines.push("above and wait for user approval.");
+    } else if (intent === "promote") {
+      lines.push("Prompt signals phase-promote. check-review-evidence hook will");
+      lines.push("block the commit unless .omc/reviews/<phase>-{reviewer,verifier,");
+      lines.push("critic}.md exist with accepted verdicts. Run /phase-review first.");
+    } else if (intent === "trivial") {
+      lines.push("Prompt looks trivial (typo/rename/comment). V5-R007 allows");
+      lines.push("direct edit after state read. Skip ralplan.");
+    }
+    lines.push("</prompt-classifier>");
+    lines.push("");
+  }
+
   lines.push("[MEGA-TEMPLATE CONTEXT]");
 
   // Session-start detection (3 entry flows)
@@ -162,6 +207,35 @@ function loadClaudeMdDigest(md) {
     "  • After 3 failed fixes → question architecture",
     "  • REDACT secrets before output",
   ].join("\n");
+}
+
+/**
+ * Classify user prompt intent so the protocol can be strengthened.
+ *   "coding"  — user wants to add/build/implement/fix/refactor code
+ *   "promote" — user wants to promote or verify a phase
+ *   "trivial" — typo/rename/comment-only change (V5-R007 exempt)
+ *   "none"    — read/search/ask questions, no strengthening needed
+ */
+function classifyIntent(prompt) {
+  if (!prompt) return "none";
+  const p = prompt.toLowerCase();
+  if (/\b(phase-promote|\/phase-promote|promote phase|verified)\b/.test(p)) return "promote";
+  if (/\b(typo|rename|comment[- ]only|reword|reformat)\b/.test(p)) return "trivial";
+  if (/\b(add|build|implement|create|fix|feature|phase|slice|step|task|write code|refactor|module|component|endpoint|service|handler|function)\b/.test(p)) {
+    return "coding";
+  }
+  return "none";
+}
+
+async function readStdinJson() {
+  try {
+    if (process.stdin.isTTY) return null;
+    let raw = "";
+    for await (const chunk of process.stdin) raw += chunk;
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 main().catch(() => process.exit(0));
