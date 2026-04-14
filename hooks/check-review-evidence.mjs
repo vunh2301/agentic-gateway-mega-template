@@ -112,9 +112,10 @@ function readReviewConfig(repoRoot) {
   if (!existsSync(yamlPath)) return DEFAULTS;
   try {
     const yaml = readFileSync(yamlPath, "utf8");
-    const m = yaml.match(/^review:\s*\n((?:\s+.*\n?)+?)(?=^\S|\Z)/m);
-    if (!m) return DEFAULTS;
-    const block = m[1];
+    // Line-based block extractor — avoids JS regex \Z bug and
+    // catastrophic backtracking from non-greedy + lookahead patterns.
+    const block = extractTopLevelBlock(yaml, "review");
+    if (!block) return DEFAULTS;
     const enabled = !/^\s+enabled:\s*false/m.test(block);
     const dirM = block.match(/artifact_dir:\s*"?([^"\n]+?)"?\s*$/m);
     const reqM = block.match(/required:\s*\[([^\]]+)\]/);
@@ -132,6 +133,21 @@ function readReviewConfig(repoRoot) {
   } catch {
     return DEFAULTS;
   }
+}
+
+function extractTopLevelBlock(yaml, key) {
+  const lines = yaml.split(/\r?\n/);
+  const startRe = new RegExp(`^${key}:\\s*$`);
+  let i = 0;
+  while (i < lines.length && !startRe.test(lines[i])) i++;
+  if (i >= lines.length) return null;
+  const body = [];
+  for (let j = i + 1; j < lines.length; j++) {
+    const ln = lines[j];
+    if (ln === "" || /^\s/.test(ln)) body.push(ln);
+    else break;
+  }
+  return body.join("\n");
 }
 
 function readActivePhase(repoRoot) {

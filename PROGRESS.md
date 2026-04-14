@@ -37,6 +37,7 @@ Single source of truth for plugin development.
 | 24 | ✅ done | v0.9.5 — V5-R061 slice auto-continue (default on, opt-out via spec-index `auto_continue.enabled:false` or per-slice `pauseAfter:true` in workflow.json) |
 | 25 | ✅ done | v0.9.6 — V5-R061 extended: auto-run /phase-review after last slice + auto-run /phase-promote after reviews approved; pause only at new-phase boundary or blocker |
 | 26 | ✅ done | v0.9.7 — HOTFIX: hard-safety timer adds SIGKILL fallback (process.kill(pid,'SIGKILL')) when process.exit(0) is blocked by pending I/O in Claude Code spawn context (observed 14-min hang with v0.9.6) |
+| 27 | ✅ done | v0.9.8 — ROOT-CAUSE: catastrophic ReDoS in check-review-evidence `readReviewConfig` regex (invalid `\Z` in JS + non-greedy + lookahead = exponential backtracking). Rewrote as line-based `extractTopLevelBlock`. 14-min hang was the regex, not libuv. |
 
 ## Verification evidence
 
