@@ -31,6 +31,7 @@ Single source of truth for plugin development.
 | 18 | ✅ done | v0.8.1 — absolute hook paths (fix monorepo CWD → cjs/loader:1451) |
 | 19 | ✅ done | v0.9.0 — mega-template-status CLI (npm equivalent of /spec-status for non-marketplace installs) |
 | 20 | ✅ done | v0.9.1 — init + upgrade copy commands/*.md to consumer .claude/commands/ so slash commands register on npm installs |
+| 21 | ✅ done | v0.9.2 — stdin timeout guard on all 12 hooks (fix infinite hang when harness does not signal EOF; observed in Windows git commit scenarios) |
 
 ## Verification evidence
 

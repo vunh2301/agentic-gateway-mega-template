@@ -287,9 +287,15 @@ function findRepoRoot(start) {
 }
 
 async function readStdinJson() {
-  let raw = "";
-  for await (const chunk of process.stdin) raw += chunk;
-  try { return JSON.parse(raw); } catch { return null; }
+  // Timeout guard: if stdin does not close within 1500ms, abort read.
+  // Prevents infinite hang when harness does not signal EOF (Windows/IDE edge case).
+  const readPromise = (async () => {
+    let raw = '';
+    for await (const chunk of process.stdin) raw += chunk;
+    try { return JSON.parse(raw); } catch { return null; }
+  })();
+  const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1500));
+  return Promise.race([readPromise, timeoutPromise]);
 }
 
 main().catch((e) => {
