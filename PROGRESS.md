@@ -28,6 +28,8 @@ Single source of truth for plugin development.
 | 15 | ✅ done | v0.6.0 — `mega-template-upgrade` CLI — idempotent patch for existing consumer repos (manifest-driven hook + config wiring) |
 | 16 | ✅ done | v0.7.0 — prompt-time Gate-1 enforcement (workflow-protocol + intent classifier in load-context.mjs) |
 | 17 | ✅ done | v0.8.0 — workflow continuity: enforce-slice-order hook (V5-R059/R060), active-flow + resume + drift detection in load-context, worktree docs |
+| 18 | ✅ done | v0.8.1 — absolute hook paths (fix monorepo CWD → cjs/loader:1451) |
+| 19 | ✅ done | v0.9.0 — mega-template-status CLI (npm equivalent of /spec-status for non-marketplace installs) |
 
 ## Verification evidence
 

@@ -1,12 +1,13 @@
 {
   "name": "@agentic-gateway/mega-template",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Spec-enforcement plugin for large multi-phase AI-agent projects",
   "type": "module",
   "private": false,
   "bin": {
     "mega-template-init": "./scripts/init.mjs",
     "mega-template-upgrade": "./scripts/upgrade.mjs",
+    "mega-template-status": "./scripts/status.mjs",
     "mega-template-coverage": "./scripts/spec-coverage.mjs"
   },
   "files": [
