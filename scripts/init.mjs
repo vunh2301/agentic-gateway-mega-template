@@ -270,6 +270,7 @@ function generateSettings(hookPrefix) {
           matcher: "Bash",
           hooks: [
             { type: "command", command: `node ${h}/check-review-evidence.mjs`, timeout: 5000 },
+            { type: "command", command: `node ${h}/enforce-slice-order.mjs`, timeout: 5000 },
           ],
         },
       ],

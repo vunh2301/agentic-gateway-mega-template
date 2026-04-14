@@ -1,0 +1,23 @@
+id: V5-R059
+title: Workflow — commits must carry slice-id matching workflow.json
+status: active
+category: enforcement
+severity: high
+description: |
+  When `.omc/state/workflow.json` exists (written by /ralplan or /autopilot
+  with an ordered slice plan), every non-exempt commit must carry a
+  slice-id prefix that matches the next pending slice. The hook
+  `enforce-slice-order` parses the commit message for `v5-<phase>.slice-<NN>:`
+  and rejects mismatch.
+  Exempt prefixes: docs:, chore:, infra:, ci:, build:, test:, refactor:,
+  revert:, merge:; hotfix; phase-promote (gated separately by V5-R056).
+rationale: |
+  Prior phases had agent silently pivoting mid-phase ("let me quickly fix
+  search-hybrid while I'm here"), which produced phantom commits not in
+  the plan, exploded scope, and broke PROGRESS.md fidelity. Binding each
+  commit to a plan slice forces the commit stream to mirror the plan.
+  If the plan is wrong, revise it via /ralplan — do not drift.
+enforcement:
+  type: hook
+  hook: enforce-slice-order
+added: 2026-04-14

@@ -27,6 +27,7 @@ Single source of truth for plugin development.
 | 14 | ✅ done | v0.5.1 — inject-decision-rules parser fix (strip YAML comments from list items) |
 | 15 | ✅ done | v0.6.0 — `mega-template-upgrade` CLI — idempotent patch for existing consumer repos (manifest-driven hook + config wiring) |
 | 16 | ✅ done | v0.7.0 — prompt-time Gate-1 enforcement (workflow-protocol + intent classifier in load-context.mjs) |
+| 17 | ✅ done | v0.8.0 — workflow continuity: enforce-slice-order hook (V5-R059/R060), active-flow + resume + drift detection in load-context, worktree docs |
 
 ## Verification evidence
 

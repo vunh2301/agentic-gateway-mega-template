@@ -62,6 +62,38 @@ async function main() {
     lines.push("");
   }
 
+  // === Active workflow + resume suggestion (V5-R059) ===
+  const workflow = loadWorkflowState(repoRoot);
+  if (workflow) {
+    lines.push("<active-flow>");
+    lines.push(`Phase: ${workflow.phase} — slice ${workflow.progressLabel}`);
+    if (workflow.currentSlice) {
+      lines.push(`Current: slice-${workflow.currentSlice.id} ${workflow.currentSlice.title || ""}`);
+    }
+    if (workflow.lastCompleted) {
+      lines.push(`Last done: slice-${workflow.lastCompleted.id} (commit ${workflow.lastCompleted.commit || "?"})`);
+    }
+    if (workflow.nextSlice && workflow.nextSlice !== workflow.currentSlice) {
+      lines.push(`Next: slice-${workflow.nextSlice.id} — ${workflow.nextSlice.title || ""}`);
+    }
+    lines.push(`Resume hint: reply "continue" or "/autopilot resume" to proceed.`);
+    lines.push(`Abandon hint: user must explicitly say "pause phase" or "switch to X".`);
+    lines.push("</active-flow>");
+    lines.push("");
+  }
+
+  // === Off-topic / drift detection (V5-R060) ===
+  const drift = detectDrift(userPrompt, workflow, repoRoot);
+  if (drift) {
+    lines.push("<off-topic-warning>");
+    lines.push(drift);
+    lines.push("Action: acknowledge user's request, note it may drift from the active flow,");
+    lines.push("and ask: pause current phase, add to phase-N+1 backlog, or explicitly pivot");
+    lines.push("(requires /ralplan to revise workflow.json).");
+    lines.push("</off-topic-warning>");
+    lines.push("");
+  }
+
   lines.push("[MEGA-TEMPLATE CONTEXT]");
 
   // Session-start detection (3 entry flows)
@@ -207,6 +239,112 @@ function loadClaudeMdDigest(md) {
     "  • After 3 failed fixes → question architecture",
     "  • REDACT secrets before output",
   ].join("\n");
+}
+
+/**
+ * Load workflow.json + derive current/next/last slice info for display.
+ * Returns null when no workflow file — hook caller treats that as "no active flow".
+ */
+function loadWorkflowState(repoRoot) {
+  const p = join(repoRoot, ".omc", "state", "workflow.json");
+  if (!existsSync(p)) return null;
+  try {
+    const w = JSON.parse(readFileSync(p, "utf8"));
+    const slices = w.slices || [];
+    const total = slices.length;
+    const done = slices.filter((s) => s.status === "done").length;
+    const inprog = slices.find((s) => s.status === "in-progress");
+    const nextPending = slices.find((s) => s.status === "pending");
+    const currentSlice = inprog || nextPending || null;
+    const lastCompleted = [...slices].reverse().find((s) => s.status === "done");
+    const nextSlice = currentSlice === inprog ? nextPending : currentSlice;
+    return {
+      phase: w.phase || "(unknown)",
+      progressLabel: `${done}/${total}`,
+      currentSlice,
+      nextSlice,
+      lastCompleted,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Detect off-topic prompts relative to the active phase's spec section
+ * keywords. Returns a warning string or null.
+ * Heuristic: if there's an active workflow AND the prompt has >6 words AND
+ * shares zero keywords with the phase's spec sections, flag drift.
+ * Stays conservative — false positives worse than false negatives here.
+ */
+function detectDrift(userPrompt, workflow, repoRoot) {
+  if (!workflow || !userPrompt) return null;
+  const words = userPrompt.toLowerCase().split(/\W+/).filter((w) => w.length >= 4);
+  if (words.length < 6) return null;
+  const sections = extractSectionKeywords(repoRoot, workflow.phase);
+  if (!sections.length) return null;
+  const overlap = words.some((w) => sections.some((s) => s.includes(w) || w.includes(s)));
+  if (overlap) return null;
+  return (
+    `Prompt shares no keywords with active phase "${workflow.phase}" spec sections ` +
+    `(${sections.slice(0, 5).join(", ")}${sections.length > 5 ? ", …" : ""}). ` +
+    `Looks off-topic from the current slice plan.`
+  );
+}
+
+/**
+ * Crude section-keyword extractor for drift detection. Reads phase sections
+ * list from spec-index.yaml, looks them up in the spec doc headings.
+ *
+ * Line-based parse so we avoid \Z bugs that plague JS regex multiline mode.
+ */
+function extractSectionKeywords(repoRoot, phase) {
+  try {
+    const y = safeRead(join(repoRoot, "spec-index.yaml"));
+    if (!y) return [];
+    // Find the "<phase>:" child line under "phases:" and capture its block body
+    const yLines = y.split(/\r?\n/);
+    let i = 0;
+    while (i < yLines.length && !/^phases\s*:\s*$/.test(yLines[i])) i++;
+    if (i >= yLines.length) return [];
+    i++;
+    const phaseHeader = new RegExp(`^(\\s+)${phase}:\\s*$`);
+    let phaseIndent = null;
+    while (i < yLines.length) {
+      const m = yLines[i].match(phaseHeader);
+      if (m) { phaseIndent = m[1].length; break; }
+      i++;
+    }
+    if (phaseIndent === null) return [];
+    const body = [];
+    for (let j = i + 1; j < yLines.length; j++) {
+      const ln = yLines[j];
+      if (ln === "") { body.push(ln); continue; }
+      const leading = ln.match(/^(\s*)/)[1].length;
+      if (leading > phaseIndent) { body.push(ln); continue; }
+      break;
+    }
+    const phaseBlock = body.join("\n");
+    const sectionsRaw = phaseBlock.match(/sections:\s*\[([^\]]+)\]/);
+    if (!sectionsRaw) return [];
+    const ids = sectionsRaw[1].split(",").map((s) => s.trim()).filter(Boolean);
+    const specM = y.match(/^spec:\s*(.+)$/m);
+    if (!specM) return ids.map((s) => `§${s}`);
+    const specPath = join(repoRoot, specM[1].trim());
+    const spec = safeRead(specPath);
+    if (!spec) return ids.map((s) => `§${s}`);
+    const keywords = new Set();
+    for (const id of ids) {
+      const re = new RegExp(`^#+\\s*(?:§\\s*)?${id.replace(/\./g, "\\.")}[\\s.:-]+(.+)$`, "m");
+      const hm = spec.match(re);
+      if (hm) {
+        hm[1].toLowerCase().split(/\W+/).filter((w) => w.length >= 4).forEach((w) => keywords.add(w));
+      }
+    }
+    return Array.from(keywords);
+  } catch {
+    return [];
+  }
 }
 
 /**

@@ -74,6 +74,32 @@ cd <consumer-repo>
 npx -p @agentic-gateway/mega-template mega-template-init
 ```
 
+### Running two phases in parallel (git worktree)
+
+`spec-index.yaml` has a single `active_phase`, so one consumer repo tracks
+one phase at a time. If you need to work on two phases simultaneously
+(e.g. phase-2a infra + phase-2b feature spike), use **git worktree** —
+you get two independent checkouts sharing the same `.git` object store
+but with separate `spec-index.yaml`, `.claude/`, and `.omc/state/` per
+worktree. Hooks run in each worktree against its own `active_phase`.
+
+```bash
+# Main checkout stays on phase-2a
+cd <consumer-repo>
+
+# Spin up a second worktree for the phase-2b spike
+git worktree add ../<consumer-repo>-phase-2b phase-2b-branch
+
+# In the second worktree, flip active_phase + kick off work
+cd ../<consumer-repo>-phase-2b
+# edit spec-index.yaml → active_phase: phase-2b
+# open a second Claude Code session in this directory
+```
+
+Each Claude Code session sees its own worktree — enforcement is fully
+scoped. When the spike is done, merge the branch back and `git worktree
+remove ../<consumer-repo>-phase-2b`.
+
 ### Upgrading an existing consumer repo
 
 If you already initialised a consumer with an older version of mega-template,

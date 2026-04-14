@@ -95,6 +95,7 @@ function buildManifest(h) {
           matcher: "Bash",
           entries: [
             { base: "check-review-evidence.mjs", command: `node ${h}/check-review-evidence.mjs`, timeout: 5000 },
+            { base: "enforce-slice-order.mjs", command: `node ${h}/enforce-slice-order.mjs`, timeout: 5000 },
           ],
         },
       ],

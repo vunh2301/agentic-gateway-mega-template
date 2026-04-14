@@ -1,0 +1,24 @@
+id: V5-R060
+title: Workflow — no mid-phase pivot without revised plan
+status: active
+category: enforcement
+severity: high
+description: |
+  While a workflow.json is active the agent MUST NOT skip slices, reorder
+  them on the fly, or introduce new slices without first updating
+  `.omc/state/workflow.json` and (for material changes) re-running the
+  planning pass. If the user asks "can we also fix X?", the agent must:
+    1. Acknowledge the ask
+    2. Tell the user it requires a plan revision (/ralplan or manual edit)
+    3. Not write code for X until the plan reflects it
+  The hook `enforce-slice-order` rejects commits whose slice-id does not
+  match the next pending slice.
+rationale: |
+  Scope creep is the leading cause of phase-level regressions in this
+  project. Binding slice-id to plan order makes drift impossible at the
+  commit level. User can still authorise a pivot — just make it explicit
+  via plan update.
+enforcement:
+  type: hook
+  hook: enforce-slice-order
+added: 2026-04-14
