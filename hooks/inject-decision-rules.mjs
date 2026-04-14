@@ -167,18 +167,25 @@ function extractTopLevelBlock(yaml, key) {
 }
 
 function parseListField(block, key) {
+  const stripItem = (s) =>
+    s
+      .replace(/\s+#.*$/, "")        // strip trailing YAML comment
+      .trim()
+      .replace(/^["']|["']$/g, "");
   // Inline: key: [a, b, c]
   const inline = block.match(new RegExp(`${key}:\\s*\\[([^\\]]+)\\]`));
   if (inline) {
-    return inline[1].split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+    return inline[1].split(",").map(stripItem).filter(Boolean);
   }
-  // Block: key:\n  - a\n  - b
+  // Block: key:\n  - a  # comment\n  - b
   const re = new RegExp(`${key}:\\s*\\n((?:\\s+-\\s+.+\\n?)+)`);
   const m = block.match(re);
   if (!m) return null;
-  return m[1].split("\n").filter(Boolean).map((l) =>
-    l.replace(/^\s+-\s+/, "").trim().replace(/^["']|["']$/g, "")
-  ).filter(Boolean);
+  return m[1]
+    .split("\n")
+    .filter(Boolean)
+    .map((l) => stripItem(l.replace(/^\s+-\s+/, "")))
+    .filter(Boolean);
 }
 
 function loadRuleDescriptions(repoRoot, ids) {
