@@ -367,17 +367,17 @@ function classifyIntent(prompt) {
 
 async function readStdinJson() {
   if (process.stdin.isTTY) return null;
-  const readPromise = (async () => {
-    try {
-      let raw = "";
-      for await (const chunk of process.stdin) raw += chunk;
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  })();
-  const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1500));
-  return Promise.race([readPromise, timeoutPromise]);
+  setTimeout(() => process.exit(0), 3000).unref();
+  const t = setTimeout(() => { try { process.stdin.destroy(); } catch {} }, 1500);
+  try {
+    let raw = "";
+    for await (const chunk of process.stdin) raw += chunk;
+    clearTimeout(t);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    clearTimeout(t);
+    return null;
+  }
 }
 
 main().catch(() => process.exit(0));

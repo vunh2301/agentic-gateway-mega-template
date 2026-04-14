@@ -173,15 +173,22 @@ function findRepoRoot(start) {
 }
 
 async function readStdinJson() {
-  // Timeout guard: if stdin does not close within 1500ms, abort read.
-  // Prevents infinite hang when harness does not signal EOF (Windows/IDE edge case).
-  const readPromise = (async () => {
+  // Hard-kill guard: if the whole hook hasn't finished in 3s, force-exit 0
+  // so harness never sees a stuck child process. Covers Windows/IDE cases
+  // where stdin is never closed.
+  setTimeout(() => process.exit(0), 3000).unref();
+  // Soft-timeout on the read itself: destroy stdin after 1.5s so the
+  // iteration resolves and main() can continue to exit cleanly.
+  const t = setTimeout(() => { try { process.stdin.destroy(); } catch {} }, 1500);
+  try {
     let raw = '';
     for await (const chunk of process.stdin) raw += chunk;
+    clearTimeout(t);
     try { return JSON.parse(raw); } catch { return null; }
-  })();
-  const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1500));
-  return Promise.race([readPromise, timeoutPromise]);
+  } catch {
+    clearTimeout(t);
+    return null;
+  }
 }
 
 main().catch((e) => {
