@@ -7,7 +7,7 @@
  * Non-blocking — always exit 0.
  */
 
-import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, statSync, writeSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 async function main() {
@@ -142,7 +142,10 @@ async function main() {
   lines.push("Enforcement: check-spec, check-phase-gate, check-spec-coverage,");
   lines.push("require-tests, orphan-sweep. Bypass: CLAUDE_SKIP_HOOKS=1.");
 
-  process.stdout.write(lines.join("\n") + "\n");
+  // Synchronous write to fd 1 — bypasses Node's async stdout buffering
+  // so the harness always gets the full context even if the SIGKILL timer
+  // fires before the event loop drains.
+  writeSync(1, lines.join("\n") + "\n");
   process.exit(0);
 }
 

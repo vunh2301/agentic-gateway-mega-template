@@ -33,7 +33,7 @@
  * Bypass: env CLAUDE_SKIP_HOOKS=1 or `decisions.enabled: false`.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 const DEFAULTS = {
@@ -94,7 +94,10 @@ async function main() {
       additionalContext: guidance,
     },
   };
-  process.stdout.write(JSON.stringify(out));
+  // Synchronous write to fd 1 — bypasses Node's async stdout buffering
+  // so the harness always gets the full JSON even if the SIGKILL timer
+  // fires before the event loop drains.
+  writeSync(1, JSON.stringify(out));
   process.exit(0);
 }
 
