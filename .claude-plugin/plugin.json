@@ -1,7 +1,7 @@
 {
   "name": "mega-template",
   "description": "Spec-enforcement plugin for large multi-phase AI-agent projects. Combines hook-level gates, stable rule IDs, phase scope enforcement, and spec traceability. Designed to be pinned per-consumer-repo.",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "author": {
     "name": "Justin",
     "email": "vunh2301@gmail.com"

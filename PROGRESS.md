@@ -38,6 +38,7 @@ Single source of truth for plugin development.
 | 25 | ✅ done | v0.9.6 — V5-R061 extended: auto-run /phase-review after last slice + auto-run /phase-promote after reviews approved; pause only at new-phase boundary or blocker |
 | 26 | ✅ done | v0.9.7 — HOTFIX: hard-safety timer adds SIGKILL fallback (process.kill(pid,'SIGKILL')) when process.exit(0) is blocked by pending I/O in Claude Code spawn context (observed 14-min hang with v0.9.6) |
 | 27 | ✅ done | v0.9.8 — ROOT-CAUSE: catastrophic ReDoS in check-review-evidence `readReviewConfig` regex (invalid `\Z` in JS + non-greedy + lookahead = exponential backtracking). Rewrote as line-based `extractTopLevelBlock`. 14-min hang was the regex, not libuv. |
+| 28 | ✅ done | v0.9.9 — `/phase-review` workspace-isolation bug: docs now require pre-flight `git status` check + commit-as-WIP option + explicit "no worktree isolation" + concrete file paths. Prevents false-negative "no source" verdict observed when reviewer agents ran isolated and missed uncommitted files. |
 
 ## Verification evidence
 
