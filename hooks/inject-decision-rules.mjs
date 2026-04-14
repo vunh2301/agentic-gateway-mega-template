@@ -68,7 +68,13 @@ const CONSTRAINT_DESCRIPTIONS = {
 async function main() {
   // HARD SAFETY: process exits within 2.5s no matter what — prevents 
   // any async hang from blocking the harness (V5-R049).
-  setTimeout(() => { try { process.exit(0); } catch {} }, 2500);
+  setTimeout(() => {
+    // Try graceful exit first
+    try { process.exit(0); } catch {}
+    // Fallback: SIGKILL self to bypass libuv event loop if exit() is blocked
+    // by pending I/O on Windows (observed with Claude Code spawn + piped stdin).
+    try { process.kill(process.pid, 'SIGKILL'); } catch {}
+  }, 2500);
   if (process.env.CLAUDE_SKIP_HOOKS === "1") process.exit(0);
 
   const payload = await readStdinJson();
