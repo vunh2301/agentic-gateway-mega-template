@@ -24,6 +24,8 @@ Single source of truth for plugin development.
 | 11 | ✅ done | v0.4.0 — Gate 4.5 Independent Review (check-review-evidence hook, /phase-review command, V5-R055/R056) |
 | 12 | ✅ done | v0.4.1 — auto git init + PowerShell-safe README |
 | 13 | ✅ done | v0.5.0 — Decision Mode (inject-decision-rules hook, V5-R057/R058) — skip ceremonial questions |
+| 14 | ✅ done | v0.5.1 — inject-decision-rules parser fix (strip YAML comments from list items) |
+| 15 | ✅ done | v0.6.0 — `mega-template-upgrade` CLI — idempotent patch for existing consumer repos (manifest-driven hook + config wiring) |
 
 ## Verification evidence
 

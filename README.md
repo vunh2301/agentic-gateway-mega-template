@@ -74,6 +74,25 @@ cd <consumer-repo>
 npx -p @agentic-gateway/mega-template mega-template-init
 ```
 
+### Upgrading an existing consumer repo
+
+If you already initialised a consumer with an older version of mega-template,
+bump the package and run the upgrade tool to idempotently patch
+`.claude/settings.json` and `spec-index.yaml` with any newly required hooks
+and config blocks (e.g. `review:`, `decisions:`). Existing hooks and user
+customisations are preserved; only missing entries are added, and
+`.bak-<timestamp>` backups are written before any modification.
+
+```bash
+cd <consumer-repo>
+npm install @agentic-gateway/mega-template@latest
+npx mega-template-upgrade          # patches the files
+# or: npx mega-template-upgrade --dry-run   # preview only, no writes
+```
+
+Re-running on an already-upgraded repo reports "No changes needed — consumer
+already up to date." so the command is safe in CI or on every `npm install`.
+
 ### Claude Code plugin marketplace (alternative)
 
 ```
