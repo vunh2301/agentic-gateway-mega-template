@@ -52,6 +52,8 @@ const DEFAULTS = {
   ],
   auto_continue: {
     enabled: true,
+    phase_review: true,
+    phase_promote: true,
   },
 };
 
@@ -126,16 +128,27 @@ function buildGuidance(cfg, ruleDescriptions) {
   lines.push("  - Contrarian/drift-check rounds after a decision is already made → skip unless user explicitly asks.");
   lines.push("");
   if (cfg.auto_continue?.enabled) {
-    lines.push("Slice auto-continue (V5-R061):");
-    lines.push("  After a slice completes with all gates pass, auto-continue to the next pending");
-    lines.push("  slice in workflow.json WITHOUT asking the user. Log 'auto-continued slice-NN per");
-    lines.push("  V5-R061' in the next commit body. PAUSE only if:");
-    lines.push("    - current slice has pauseAfter:true in workflow.json");
-    lines.push("    - auto_continue.enabled:false in spec-index.yaml");
-    lines.push("    - phase boundary (no more pending slices) → /phase-promote");
-    lines.push("    - Gate 4.5 reviews missing or blocking → /phase-review");
-    lines.push("    - user_choice topic triggered");
-    lines.push("    - off-topic drift warning");
+    lines.push("Auto-continue chain (V5-R061):");
+    lines.push("  Proceed WITHOUT asking across the intra-phase chain:");
+    lines.push("    slice verify pass + more pending → next slice auto-start");
+    if (cfg.auto_continue.phase_review !== false) {
+      lines.push("    last slice done → /phase-review (Gate 4.5) auto-run");
+    }
+    if (cfg.auto_continue.phase_promote !== false) {
+      lines.push("    /phase-review all-approved → /phase-promote (Gate 5) auto-run");
+    }
+    lines.push("    /phase-promote done → STOP at new-phase boundary (user_choice: next phase scope)");
+    lines.push("");
+    lines.push("  PAUSE only if:");
+    lines.push("    - current slice pauseAfter:true in workflow.json");
+    lines.push("    - spec-index.yaml auto_continue.enabled:false (or phase_review/phase_promote:false)");
+    lines.push("    - /phase-review verdict changes-requested / rejected");
+    lines.push("    - any hook block fires");
+    lines.push("    - user_choice topic (scope, oversight, API design)");
+    lines.push("    - off-topic drift");
+    lines.push("    - V5-R013 tripped (3 consecutive fix attempts)");
+    lines.push("");
+    lines.push("  Log 'auto-continued <step> per V5-R061' in commit body.");
     lines.push("");
   }
   lines.push("Audit (V5-R058): every auto-decision must be traceable. Include rule-id in commit body or response text.");
@@ -152,10 +165,14 @@ function readDecisionConfig(repoRoot) {
     const block = extractTopLevelBlock(yaml, "decisions");
     if (!block) return DEFAULTS;
     const enabled = !/^\s+enabled:\s*false/m.test(block);
-    const autoContinueM = block.match(/auto_continue:\s*\n\s+enabled:\s*(true|false)/m);
-    const autoContinue = autoContinueM
-      ? { enabled: autoContinueM[1] === "true" }
-      : DEFAULTS.auto_continue;
+    const autoEnabledM = block.match(/auto_continue:\s*\n(?:\s+.+\n?)*?\s+enabled:\s*(true|false)/m);
+    const phaseReviewM = block.match(/auto_continue:\s*\n(?:\s+.+\n?)*?\s+phase_review:\s*(true|false)/m);
+    const phasePromoteM = block.match(/auto_continue:\s*\n(?:\s+.+\n?)*?\s+phase_promote:\s*(true|false)/m);
+    const autoContinue = {
+      enabled: autoEnabledM ? autoEnabledM[1] === "true" : DEFAULTS.auto_continue.enabled,
+      phase_review: phaseReviewM ? phaseReviewM[1] === "true" : DEFAULTS.auto_continue.phase_review,
+      phase_promote: phasePromoteM ? phasePromoteM[1] === "true" : DEFAULTS.auto_continue.phase_promote,
+    };
     return {
       enabled,
       auto_apply: parseListField(block, "auto_apply") ?? DEFAULTS.auto_apply,

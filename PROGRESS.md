@@ -35,6 +35,7 @@ Single source of truth for plugin development.
 | 22 | ✅ done | v0.9.3 — HOTFIX: v0.9.2 Promise.race did not exit process (event loop still busy); now destroys stdin at 1.5s + hard-kill timer at 3s to guarantee exit |
 | 23 | ✅ done | v0.9.4 — HARD SAFETY: unconditional `setTimeout(exit, 2500)` at main() entry in every hook, no `.unref()`, cannot be defeated by any async hang |
 | 24 | ✅ done | v0.9.5 — V5-R061 slice auto-continue (default on, opt-out via spec-index `auto_continue.enabled:false` or per-slice `pauseAfter:true` in workflow.json) |
+| 25 | ✅ done | v0.9.6 — V5-R061 extended: auto-run /phase-review after last slice + auto-run /phase-promote after reviews approved; pause only at new-phase boundary or blocker |
 
 ## Verification evidence
 

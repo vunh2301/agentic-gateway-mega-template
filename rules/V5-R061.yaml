@@ -1,33 +1,46 @@
 id: V5-R061
-title: Slice boundary — auto-continue by default, opt-in pause
+title: Auto-continue deterministic transitions across slice/review/promote
 status: active
 category: enforcement
 severity: medium
 description: |
-  After a slice completes with all Gate 3 + Gate 4 checks pass, the agent
-  MUST auto-continue to the next pending slice in workflow.json WITHOUT
-  asking the user, unless one of these pause signals is present:
+  After any completable step the agent MUST auto-proceed to the next
+  deterministic action WITHOUT asking the user, unless a pause signal
+  triggers. Applies to the whole intra-phase chain:
+
+  Slice verify pass + more pending slices
+    → next slice auto-start
+  Last slice of phase verify pass (workflow.json all slices done)
+    → auto-run `/phase-review` (Gate 4.5)
+  `/phase-review` produces all-approved artifacts
+    → auto-run `/phase-promote` (Gate 5)
+  `/phase-promote` completes
+    → STOP at new-phase boundary (user decides next phase scope)
+
+  PAUSE signals that override auto-continue:
 
     1. Current slice has `"pauseAfter": true` in workflow.json
-       → explicit per-slice oversight
     2. Global `auto_continue.enabled: false` in spec-index.yaml
-       → fully interactive mode
-    3. Phase boundary reached (no more pending slices)
-       → stop for user to trigger /phase-promote (Gate 5)
-    4. Gate 4.5 (`.omc/reviews/<phase>-*.md`) not yet present or blocking
-       → pause to run /phase-review
-    5. User_choice topic triggered (scope prioritization, external API, etc)
-       → legitimate preference ask
-    6. Off-topic drift warning injected by load-context
-       → agent must clarify with user
+    3. `auto_continue.phase_review: false` — opt out of auto Gate 4.5
+    4. `auto_continue.phase_promote: false` — opt out of auto Gate 5
+    5. `/phase-review` verdict changes-requested / rejected
+       → user must fix or bypass
+    6. Any hook block (check-phase-gate, enforce-slice-order,
+       check-review-evidence, enforce-tdd, check-spec, check-spec-coverage,
+       check-e2e-real, enforce-verification)
+       → can't auto-recover, needs user input
+    7. Off-topic drift warning injected
+    8. V5-R013 tripped: 3 consecutive fix attempts at the same layer
+       → architecture question
+    9. User_choice topic triggered (scope prioritization, oversight level,
+       external API design)
 
-  Default behaviour is auto-continue. Asking "Bạn muốn tiếp tục slice-N+1
-  không?" after a clean pass is ceremonial overhead and a design flaw in
-  pre-v0.9.5 workflow. Opt in to the old behaviour by flagging specific
-  slices with `pauseAfter: true`.
+  Phase boundary is ALWAYS a stop — starting a new phase means choosing
+  scope, which is a user_choice per V5-R057. Agent never auto-starts
+  phase-N+1.
 
-  Log `auto-continued slice-NN per V5-R061` in the next commit body so
-  human reviewers can trace the decision chain.
+  Log `auto-continued <step> per V5-R061` in the commit/response so human
+  reviewers can trace the decision chain.
 rationale: |
   Cheap models (kimi, haiku) default to conservative "ask everything"
   behaviour, which wastes user attention on deterministic transitions.

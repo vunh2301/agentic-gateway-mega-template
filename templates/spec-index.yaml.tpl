@@ -104,7 +104,8 @@ decisions:
     - oversight_level
     - external_api_design
   auto_continue:
-    enabled: true            # default: auto-continue after clean slice pass
-                             # Set to false for fully interactive mode (ask every slice).
-                             # Per-slice override: set `"pauseAfter": true` on a slice in
-                             # .omc/state/workflow.json to force a pause after that slice.
+    enabled: true            # master switch — false = fully interactive mode
+    phase_review: true       # auto-run /phase-review after last slice of phase
+    phase_promote: true      # auto-run /phase-promote after all reviews approved
+    # Per-slice override: set `"pauseAfter": true` on a slice in
+    # .omc/state/workflow.json to force a pause after that specific slice.
