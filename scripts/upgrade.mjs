@@ -26,7 +26,7 @@
  * Rule V5-R057: auto-apply rule-based decisions, skip ceremonial prompts.
  */
 
-import { existsSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, copyFileSync, mkdirSync, readdirSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -218,6 +218,33 @@ async function main() {
     }
   }
 
+  // === 1b. Sync slash commands (commands/*.md → .claude/commands/) ===
+  // NPM-installed consumers lose slash commands unless we copy them into
+  // the project's .claude/commands/ — Claude Code's per-project location.
+  const cmdSrcDir = join(pluginRoot, "commands");
+  const cmdDstDir = join(cwd, ".claude", "commands");
+  const commandChanges = [];
+  if (existsSync(cmdSrcDir)) {
+    if (!existsSync(cmdDstDir) && !args.dryRun) mkdirSync(cmdDstDir, { recursive: true });
+    for (const f of readdirSync(cmdSrcDir)) {
+      if (!f.endsWith(".md")) continue;
+      const src = join(cmdSrcDir, f);
+      const dst = join(cmdDstDir, f);
+      if (!existsSync(dst)) {
+        commandChanges.push({ kind: "add", file: f, src, dst });
+        changes.push(`+ .claude/commands/${f}: copied from plugin`);
+      } else {
+        // Heal if plugin version newer than consumer copy
+        const srcContent = readFileSync(src, "utf8");
+        const dstContent = readFileSync(dst, "utf8");
+        if (srcContent !== dstContent) {
+          commandChanges.push({ kind: "update", file: f, src, dst });
+          changes.push(`~ .claude/commands/${f}: updated from plugin`);
+        }
+      }
+    }
+  }
+
   // === 2. Patch spec-index.yaml config blocks ===
   let newYaml = specYaml;
   for (const block of manifest.configBlocks) {
@@ -251,6 +278,11 @@ async function main() {
 
   writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
   writeFileSync(specPath, newYaml);
+
+  // Apply command syncs after settings+spec (safe, idempotent)
+  for (const c of commandChanges) {
+    copyFileSync(c.src, c.dst);
+  }
 
   console.log(`[upgrade] Wrote ${settingsPath}`);
   console.log(`[upgrade] Wrote ${specPath}`);

@@ -210,6 +210,27 @@ async function main() {
     writeIfAbsent(join(cwd, out), content);
   }
 
+  // 5b. Copy commands/*.md into consumer's .claude/commands/ so slash
+  // commands (/spec-status, /phase-promote, /phase-review, /spec-init)
+  // register in Claude Code even when the plugin is installed via npm
+  // (not plugin marketplace). Idempotent — skip existing files.
+  const cmdSrcDir = join(pluginRoot, "commands");
+  const cmdDstDir = join(claudeDir, "commands");
+  if (existsSync(cmdSrcDir)) {
+    if (!existsSync(cmdDstDir)) mkdirSync(cmdDstDir, { recursive: true });
+    const { readdirSync: rdSync, copyFileSync } = await import("node:fs");
+    for (const f of rdSync(cmdSrcDir)) {
+      if (!f.endsWith(".md")) continue;
+      const dst = join(cmdDstDir, f);
+      if (existsSync(dst)) {
+        console.log(`[init] ${dst} already exists — skipping`);
+        continue;
+      }
+      copyFileSync(join(cmdSrcDir, f), dst);
+      console.log(`[init] wrote ${dst}`);
+    }
+  }
+
   // 6. .gitignore additions
   const gitignorePath = join(cwd, ".gitignore");
   const ignoreAdds = [

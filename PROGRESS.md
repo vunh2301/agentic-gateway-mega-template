@@ -30,6 +30,7 @@ Single source of truth for plugin development.
 | 17 | ✅ done | v0.8.0 — workflow continuity: enforce-slice-order hook (V5-R059/R060), active-flow + resume + drift detection in load-context, worktree docs |
 | 18 | ✅ done | v0.8.1 — absolute hook paths (fix monorepo CWD → cjs/loader:1451) |
 | 19 | ✅ done | v0.9.0 — mega-template-status CLI (npm equivalent of /spec-status for non-marketplace installs) |
+| 20 | ✅ done | v0.9.1 — init + upgrade copy commands/*.md to consumer .claude/commands/ so slash commands register on npm installs |
 
 ## Verification evidence
 
