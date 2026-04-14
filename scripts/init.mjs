@@ -71,17 +71,17 @@ function detectHookPathPrefix(cwd) {
   const root = pluginRoot.replace(/\\/g, "/");
   const cwdN = cwd.replace(/\\/g, "/");
 
+  // Always prefer absolute path — Claude Code session CWD may be a subpackage
+  // in monorepos, and relative `node_modules/...` paths break silently there
+  // (cjs/loader:1451 MODULE_NOT_FOUND). Absolute paths work from any CWD.
   if (root.includes("/node_modules/")) {
-    return "node_modules/@agentic-gateway/mega-template/hooks";
-  }
-  if (root.includes("/plugins/cache/") || root.includes("/plugins/marketplaces/")) {
-    // Claude Code plugin — use absolute path (works regardless of consumer cwd)
+    // root = .../<consumer>/node_modules/@agentic-gateway/mega-template
     return root + "/hooks";
   }
-  // Dev fallback: relative from consumer to plugin repo
-  if (root.startsWith(cwdN)) {
-    return root.slice(cwdN.length + 1) + "/hooks";
+  if (root.includes("/plugins/cache/") || root.includes("/plugins/marketplaces/")) {
+    return root + "/hooks";
   }
+  // Dev fallback: still absolute
   return root + "/hooks";
 }
 

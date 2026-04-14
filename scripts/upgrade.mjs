@@ -51,16 +51,8 @@ function parseArgs(argv) {
  */
 function detectHookPathPrefix(cwd) {
   const root = pluginRoot.replace(/\\/g, "/");
-  const cwdN = cwd.replace(/\\/g, "/");
-  if (root.includes("/node_modules/")) {
-    return "node_modules/@agentic-gateway/mega-template/hooks";
-  }
-  if (root.includes("/plugins/cache/") || root.includes("/plugins/marketplaces/")) {
-    return root + "/hooks";
-  }
-  if (root.startsWith(cwdN)) {
-    return root.slice(cwdN.length + 1) + "/hooks";
-  }
+  // Absolute path (same fix as init.mjs) — relative paths break silently when
+  // Claude Code CWD is a monorepo subpackage. See init.mjs for rationale.
   return root + "/hooks";
 }
 
@@ -206,7 +198,7 @@ async function main() {
       }
       existingGroup.hooks = existingGroup.hooks || [];
       for (const entry of group.entries) {
-        const already = existingGroup.hooks.some((h) => {
+        const already = existingGroup.hooks.find((h) => {
           const b = basename((h.command || "").replace(/\\/g, "/").split(/\s+/).pop() || "");
           return b === entry.base;
         });
@@ -214,6 +206,12 @@ async function main() {
           existingGroup.hooks.push({ type: "command", command: entry.command, timeout: entry.timeout });
           changes.push(
             `+ .claude/settings.json: added ${event}${matcher ? `/${matcher}` : ""} → ${entry.base}`,
+          );
+        } else if (already.command !== entry.command) {
+          // Heal stale path (e.g. relative → absolute after v0.8.1 fix)
+          already.command = entry.command;
+          changes.push(
+            `~ .claude/settings.json: updated ${event}${matcher ? `/${matcher}` : ""} → ${entry.base} path`,
           );
         }
       }
