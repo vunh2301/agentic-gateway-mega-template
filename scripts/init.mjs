@@ -210,6 +210,45 @@ async function main() {
     writeIfAbsent(join(cwd, out), content);
   }
 
+  // 5a. For monorepo layout, scaffold the subpackage workspace manifest.
+  // Root package.json declares `"workspaces": ["packages/*"]` but npm
+  // skips directories without their own package.json → `npm test
+  // --workspaces` returns "No workspaces found" → phase-promote gate
+  // fails. Create a minimal manifest so the subpackage is actually a
+  // workspace from day one.
+  if (layout === "monorepo") {
+    const pkgDir = join(cwd, "packages", activePackage);
+    const pkgJsonPath = join(pkgDir, "package.json");
+    if (!existsSync(pkgJsonPath)) {
+      mkdirSync(pkgDir, { recursive: true });
+      const subPkg = {
+        name: activePackage,
+        private: true,
+        version: "0.1.0",
+        type: "module",
+        scripts: {
+          test: 'node --experimental-strip-types --test "tests/**/*.test.ts"',
+          build: "tsc --noEmit",
+          coverage:
+            'node --experimental-strip-types --experimental-test-coverage --test "tests/**/*.test.ts"',
+        },
+        devDependencies: {
+          typescript: "^5.5.0",
+        },
+      };
+      writeIfAbsent(pkgJsonPath, JSON.stringify(subPkg, null, 2) + "\n");
+    }
+    // Also create empty src/ + tests/ placeholders so the paths glob in
+    // spec-index.yaml has something to match before agent writes first file.
+    for (const sub of ["src", "tests"]) {
+      const d = join(pkgDir, sub);
+      if (!existsSync(d)) {
+        mkdirSync(d, { recursive: true });
+        console.log(`[init] created ${d}`);
+      }
+    }
+  }
+
   // 5b. Copy commands/*.md into consumer's .claude/commands/ so slash
   // commands (/spec-status, /phase-promote, /phase-review, /spec-init)
   // register in Claude Code even when the plugin is installed via npm

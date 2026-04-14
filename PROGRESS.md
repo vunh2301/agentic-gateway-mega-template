@@ -40,6 +40,8 @@ Single source of truth for plugin development.
 | 27 | ✅ done | v0.9.8 — ROOT-CAUSE: catastrophic ReDoS in check-review-evidence `readReviewConfig` regex (invalid `\Z` in JS + non-greedy + lookahead = exponential backtracking). Rewrote as line-based `extractTopLevelBlock`. 14-min hang was the regex, not libuv. |
 | 28 | ✅ done | v0.9.9 — `/phase-review` workspace-isolation bug: docs now require pre-flight `git status` check + commit-as-WIP option + explicit "no worktree isolation" + concrete file paths. Prevents false-negative "no source" verdict observed when reviewer agents ran isolated and missed uncommitted files. |
 | 29 | ✅ done | v0.9.10 — defensive: `fs.writeSync(1,...)` for hook stdout in load-context + inject-decision-rules so SIGKILL fallback cannot truncate JSON/context mid-write |
+| 30 | ✅ done | v0.9.11 — republished with correct load-context writeSync patch (0.9.10 tag had incomplete fix on one hook) |
+| 31 | ✅ done | v0.9.12 — init.mjs scaffolds `packages/<activePackage>/package.json` + empty src/tests for monorepo layout. Prevents phase-promote "No workspaces found" blocker when agent forgets the subpackage manifest. |
 
 ## Verification evidence
 
