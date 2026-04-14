@@ -15,6 +15,9 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 async function main() {
+  // HARD SAFETY: process exits within 2.5s no matter what — prevents
+  // any async hang from blocking the harness (V5-R049).
+  setTimeout(() => { try { process.exit(0); } catch {} }, 2500);
   if (process.env.CLAUDE_SKIP_HOOKS === "1") process.exit(0);
 
   const repoRoot = findRepoRoot(process.cwd());

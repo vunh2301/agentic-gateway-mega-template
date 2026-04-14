@@ -33,6 +33,7 @@ Single source of truth for plugin development.
 | 20 | ✅ done | v0.9.1 — init + upgrade copy commands/*.md to consumer .claude/commands/ so slash commands register on npm installs |
 | 21 | ✅ done | v0.9.2 — stdin timeout guard on all 12 hooks (fix infinite hang when harness does not signal EOF; observed in Windows git commit scenarios) |
 | 22 | ✅ done | v0.9.3 — HOTFIX: v0.9.2 Promise.race did not exit process (event loop still busy); now destroys stdin at 1.5s + hard-kill timer at 3s to guarantee exit |
+| 23 | ✅ done | v0.9.4 — HARD SAFETY: unconditional `setTimeout(exit, 2500)` at main() entry in every hook, no `.unref()`, cannot be defeated by any async hang |
 
 ## Verification evidence
 

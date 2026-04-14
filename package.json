@@ -1,6 +1,6 @@
 {
   "name": "@agentic-gateway/mega-template",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Spec-enforcement plugin for large multi-phase AI-agent projects",
   "type": "module",
   "private": false,
