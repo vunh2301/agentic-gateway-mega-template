@@ -184,6 +184,35 @@ async function main() {
     PHASE2_DESC: `(define in spec-index.yaml)`,
   };
 
+  // 1b. Root package.json — needed so npm workspaces work and
+  // @agentic-gateway/mega-template is a recorded dependency. Without
+  // this, `npm install` does not know to keep the mega-template package,
+  // `npm test --workspaces` finds nothing, and hook command paths in
+  // settings.json can reference missing node_modules entries.
+  const rootPkgPath = join(cwd, "package.json");
+  if (!existsSync(rootPkgPath)) {
+    const rootPkg = {
+      name: projectName.toLowerCase().replace(/[^a-z0-9-_]/g, "-"),
+      private: true,
+      type: "module",
+      ...(layout === "monorepo" ? { workspaces: ["packages/*"] } : {}),
+      scripts: layout === "monorepo"
+        ? {
+            test: "npm test --workspaces --if-present",
+            build: "npm run build --workspaces --if-present",
+          }
+        : {
+            test: 'node --experimental-strip-types --test "tests/**/*.test.ts"',
+            build: "tsc --noEmit",
+          },
+      dependencies: {
+        "@agentic-gateway/mega-template": "^0.9.13",
+      },
+      ...(layout === "flat" ? { devDependencies: { typescript: "^5.5.0" } } : {}),
+    };
+    writeIfAbsent(rootPkgPath, JSON.stringify(rootPkg, null, 2) + "\n");
+  }
+
   // 2. .claude/settings.json
   const claudeDir = join(cwd, ".claude");
   if (!existsSync(claudeDir)) mkdirSync(claudeDir, { recursive: true });
@@ -293,13 +322,30 @@ async function main() {
     console.log(`[init] created .gitignore`);
   }
 
+  // 7. Warn if node_modules is missing — hook paths in settings.json
+  // reference files that won't exist until the user runs `npm install`.
+  const nodeModulesExists = existsSync(join(cwd, "node_modules", "@agentic-gateway", "mega-template"));
+  if (!nodeModulesExists) {
+    console.log("");
+    console.log("[init] ⚠  node_modules/@agentic-gateway/mega-template is missing.");
+    console.log("[init]    Hooks will error until you run: npm install");
+  }
+
   // Done
   console.log("\n[mega-template-init] DONE.\n");
   console.log("Next steps:");
-  console.log("  1. Review generated CLAUDE.md, PROGRESS.md, spec-index.yaml");
-  console.log("  2. Write your real spec at", specPath);
-  console.log("  3. Commit: git add . && git commit -m 'infra: bootstrap mega-template'");
-  console.log("  4. Start work: tell Claude 'Start " + activePackage + " " + activePhase + "'");
+  if (!nodeModulesExists) {
+    console.log("  1. Install dependencies:  npm install");
+    console.log("  2. Review generated CLAUDE.md, PROGRESS.md, spec-index.yaml");
+    console.log("  3. Write your real spec at", specPath);
+    console.log("  4. Commit: git add . && git commit -m 'infra: bootstrap mega-template'");
+    console.log("  5. Start work: tell Claude 'Start " + activePackage + " " + activePhase + "'");
+  } else {
+    console.log("  1. Review generated CLAUDE.md, PROGRESS.md, spec-index.yaml");
+    console.log("  2. Write your real spec at", specPath);
+    console.log("  3. Commit: git add . && git commit -m 'infra: bootstrap mega-template'");
+    console.log("  4. Start work: tell Claude 'Start " + activePackage + " " + activePhase + "'");
+  }
   console.log("");
 }
 

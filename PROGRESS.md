@@ -42,6 +42,7 @@ Single source of truth for plugin development.
 | 29 | ✅ done | v0.9.10 — defensive: `fs.writeSync(1,...)` for hook stdout in load-context + inject-decision-rules so SIGKILL fallback cannot truncate JSON/context mid-write |
 | 30 | ✅ done | v0.9.11 — republished with correct load-context writeSync patch (0.9.10 tag had incomplete fix on one hook) |
 | 31 | ✅ done | v0.9.12 — init.mjs scaffolds `packages/<activePackage>/package.json` + empty src/tests for monorepo layout. Prevents phase-promote "No workspaces found" blocker when agent forgets the subpackage manifest. |
+| 32 | ✅ done | v0.9.13 — init.mjs also scaffolds ROOT `package.json` (monorepo: workspaces+scripts; flat: test/build scripts) with mega-template dep recorded. Warns if `node_modules` is missing. Prevents UserPromptSubmit hook errors when init runs in empty dir without `npm install`. |
 
 ## Verification evidence
 
